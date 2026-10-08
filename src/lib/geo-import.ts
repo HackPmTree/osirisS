@@ -327,17 +327,21 @@ export async function convertKmz(buffer: ArrayBuffer): Promise<any> {
 /* ── Yandex Maps shared links ───────────────────────────────────────── */
 
 /**
- * Accepts yandex.ru/maps links and pulls what they carry:
- *  - ?ll=lng,lat&z=…      → a point at the shown location
- *  - ?source=srm + points → route waypoints (multiple m= entries)
- *  - plain coordinates typed straight in ("48.7092,44.5119")
+ * Принимает ссылки yandex.ru/maps и извлекает всё, что в них есть:
+ *  - ?ll=долгота,широта&z=…   → точка в показанном местоположении
+ *  - ?mode=usermaps&um=constructor:<id> → пользовательская карта-конструктор:
+ *      центр (ll/z) возвращается меткой, а id конструктора сохраняется в
+ *      properties.yandex_constructor_id для последующей загрузки слоёв
+ *      через Yandex Maps JS API v4 (map.setUserMapsLayer / um).
+ *  - ?source=srm + точки      → путевые точки маршрута (несколько m=)
+ *  - просто введённые координаты ("48.7092,44.5119")
  */
 export function fromYandexLink(input: string): any {
   const raw = input.trim();
   let url: URL | null = null;
   try {
     url = new URL(raw.startsWith('http') ? raw : `https://yandex.ru/${raw}`);
-  } catch { /* not a URL — fall through to bare coordinates */ }
+  } catch { /* это не URL — пробуем разобрать как голые координаты */ }
 
   if (!url) {
     const pts = parseLatLngList(raw);
@@ -352,6 +356,35 @@ export function fromYandexLink(input: string): any {
   const ll = url.searchParams.get('ll');
   const z = url.searchParams.get('z');
   if (!isYandex) throw new Error('Домен не относится к Яндекс Картам.');
+
+  // ── Пользовательские карты-конструкторы: mode=usermaps + um=constructor:<id>
+  // Пример: https://yandex.ru/maps/?l=sat%2Cskl&ll=37.681517%2C50.284959
+  //         &mode=usermaps&um=constructor%3Aaf87...c067&z=11
+  const um = url.searchParams.get('um') || '';
+  const constructorMatch = um.match(/^constructor:([a-f0-9]{16,})$/i);
+  if (constructorMatch) {
+    const constructorId = constructorMatch[1];
+    // Режим слоёв: sat,skl = спутник + подписи (карта по умолчанию в OsirisX)
+    const layers = (url.searchParams.get('l') || '').split(',').filter(Boolean);
+    const props: Record<string, unknown> = {
+      name: `Карта-конструктор Яндекс (${constructorId.slice(0, 8)}…)`,
+      yandex_constructor_id: constructorId,
+      yandex_mode: 'usermaps',
+      yandex_layers: layers.length ? layers.join(',') : 'sat,skl',
+    };
+    if (z) props.zoom = parseInt(z, 10);
+    if (ll) {
+      const [lngS, latS] = ll.split(',');
+      const lng = parseFloat(lngS), lat = parseFloat(latS);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        // Метка центра — чтобы импорт не оказался пустым и карта «прилетела» туда
+        props.lat = lat; props.lng = lng;
+        return collection([feature({ type: 'Point', coordinates: [lng, lat] }, props)]);
+      }
+    }
+    // Нет центра — всё равно возвращаем объект-слой с id конструктора
+    return collection([feature({ type: 'Point', coordinates: [0, 0] }, props)]);
+  }
 
   // route waypoints: repeated m= params like "48.7;44.5~lm"
   const ms = url.searchParams.getAll('m')
