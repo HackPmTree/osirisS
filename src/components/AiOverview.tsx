@@ -121,7 +121,7 @@ function AlertsBrief({ result, accent, activeThreadId, onThreadSelect }: {
           <span className="flex-1 min-w-0 truncate text-[var(--text-secondary)]">
             Strongest quake <b className="text-[var(--text-primary)]">M{quake.magnitude.toFixed(1)}</b> {quake.place}
           </span>
-          {quake.tsunami && <span className="text-[8.5px] font-mono text-[#448AFF]">TSUNAMI FLAG</span>}
+          {quake.tsunami && <span className="text-[8.5px] font-mono text-[#448AFF]">ФЛАГ ЦУНАМИ</span>}
           <span className="font-mono text-[9px] text-[var(--text-muted)] flex-shrink-0">{brief.seismic!.count} total</span>
         </div>
       )}
@@ -200,7 +200,7 @@ export default function AiOverview({
       >
         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
         {loading ? 'ANALYZING…' : open ? 'HIDE AI OVERVIEW' : 'AI OVERVIEW'}
-        {stale && !loading && <span className="ml-1 w-1.5 h-1.5 rounded-full animate-osiris-pulse" style={{ background: accent }} title="The feed has changed since this read-out" />}
+        {stale && !loading && <span className="ml-1 w-1.5 h-1.5 rounded-full animate-osiris-pulse" style={{ background: accent }} title="Лента изменилась после этого отчёта" />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -223,7 +223,7 @@ export default function AiOverview({
                   {result && <span className="text-[var(--text-muted)]"> · {timeAgo(result.generatedAt).toUpperCase()}</span>}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button onClick={generate} disabled={loading} className="hover:opacity-70 transition-opacity" title="Regenerate" aria-label="Regenerate overview">
+                  <button onClick={generate} disabled={loading} className="hover:opacity-70 transition-opacity" title="Обновить" aria-label="Regenerate overview">
                     <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} style={{ color: accent }} />
                   </button>
                   <button onClick={() => setOpen(false)} className="hover:opacity-70 transition-opacity" title="Close" aria-label="Close overview">

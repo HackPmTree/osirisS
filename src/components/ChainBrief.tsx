@@ -102,7 +102,7 @@ function ChainBriefInner() {
     <div>
       {/* window selector */}
       <div className="flex items-center gap-1 mb-2">
-        <span className="text-[10px] font-mono text-[var(--text-muted)] mr-1">WINDOW</span>
+        <span className="text-[10px] font-mono text-[var(--text-muted)] mr-1">ПЕРИОД</span>
         {[7, 30, 90].map(d => (
           <button
             key={d}
@@ -120,7 +120,7 @@ function ChainBriefInner() {
         <button
           onClick={() => load(days, true)}
           className="ml-auto text-[9px] font-mono text-[var(--text-muted)] hover:text-white/70 transition-colors"
-          title="Refresh now"
+          title="Обновить сейчас"
         >
           {lastRefresh ? lastRefresh.toLocaleTimeString() : 'refresh'}
         </button>
@@ -165,9 +165,9 @@ function ChainBriefInner() {
             </div>
           )}
 
-          <Head title="ON-CHAIN EXPLOITS" icon={Flame} color="#FF3D3D" right={`${brief.exploits.length} shown`} />
+          <Head title="ЭКСПЛОИТЫ В БЛОКЧЕЙНЕ" icon={Flame} color="#FF3D3D" right={`${brief.exploits.length} shown`} />
           {brief.exploits.length === 0 && (
-            <div className="text-[10px] font-mono text-[var(--text-muted)] py-1">None in window.</div>
+            <div className="text-[10px] font-mono text-[var(--text-muted)] py-1">Нет данных за период.</div>
           )}
           {brief.exploits.slice(0, 12).map((e: any, i: number) => (
             <div key={i} className="py-1.5 border-b border-[var(--border-secondary)]/20 last:border-0">
@@ -178,15 +178,15 @@ function ChainBriefInner() {
               <div className="flex items-center gap-2 text-[10px] font-mono text-[var(--text-muted)] mt-0.5">
                 <span>{String(e.date).slice(0, 10)}</span>
                 <span className="text-[var(--text-secondary)]">{e.chain}</span>
-                {e.bridge_hack && <span className="text-[#E040FB]">BRIDGE</span>}
+                {e.bridge_hack && <span className="text-[#E040FB]">МОСТ</span>}
               </div>
               <div className="text-[10px] font-mono text-[var(--text-secondary)] leading-snug">{e.technique}</div>
             </div>
           ))}
 
-          <Head title="CRYPTO CVES" icon={Bug} color="#E040FB" right={`${brief.cves.length} shown`} />
+          <Head title="CVE В КРИПТОСФЕРЕ" icon={Bug} color="#E040FB" right={`${brief.cves.length} shown`} />
           {brief.cves.length === 0 && (
-            <div className="text-[10px] font-mono text-[var(--text-muted)] py-1">None published in window.</div>
+            <div className="text-[10px] font-mono text-[var(--text-muted)] py-1">За период ничего не опубликовано.</div>
           )}
           {brief.cves.slice(0, 10).map((c: any, i: number) => {
             const col = SEV_COLOR[String(c.severity || '').toLowerCase()] || '#9B978E';
@@ -207,7 +207,7 @@ function ChainBriefInner() {
             );
           })}
 
-          <Head title="OFAC DESIGNATED WALLETS" icon={ShieldAlert} color="#FFD700" right={`${t?.sanctioned_wallet_count ?? 0} total`} />
+          <Head title="КОШЕЛЬКИ ИЗ СПИСКА OFAC" icon={ShieldAlert} color="#FFD700" right={`${t?.sanctioned_wallet_count ?? 0} total`} />
           {brief.sanctioned_wallets.slice(0, 10).map((w: any, i: number) => (
             <div key={i} className="flex items-center gap-2 py-1 text-[10px] font-mono">
               <span className="w-[34px] font-bold text-[#FFD700]">{w.asset}</span>
@@ -218,7 +218,7 @@ function ChainBriefInner() {
 
           {brief.degraded?.length > 0 && (
             <div className="mt-3 px-2 py-1.5 rounded border border-white/10 bg-white/[0.03]">
-              <span className="text-[10px] font-mono text-[var(--text-muted)] block mb-0.5">DEGRADED SOURCES</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)] block mb-0.5">ДЕГРАДИРОВАННЫЕ ИСТОЧНИКИ</span>
               {brief.degraded.map((d: string, i: number) => (
                 <div key={i} className="text-[10px] font-mono text-[var(--text-secondary)] leading-snug">↳ {d}</div>
               ))}

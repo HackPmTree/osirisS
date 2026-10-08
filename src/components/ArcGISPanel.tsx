@@ -284,7 +284,7 @@ export default function ArcGISPanel({
                       <button
                         onClick={() => setExpandedLayerId(isExpanded ? null : layer.id)}
                         className="flex-shrink-0 p-0.5 rounded hover:bg-white/10 transition-colors text-white/40 hover:text-white/70"
-                        title="Layer settings"
+                        title="Настройки слоя"
                       >
                         <SlidersHorizontal className="w-3 h-3" />
                       </button>
@@ -301,7 +301,7 @@ export default function ArcGISPanel({
                           if (isExpanded) setExpandedLayerId(null);
                         }}
                         className="flex-shrink-0 p-0.5 rounded text-red-400/40 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                        title="Remove Layer"
+                        title="Удалить слой"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -388,7 +388,7 @@ export default function ArcGISPanel({
             setActiveCategory(null);
           }}
           onKeyDown={(e) => e.key === 'Enter' && runSearch(query)}
-          placeholder="Search ArcGIS layers..."
+          placeholder="Поиск слоёв ArcGIS..."
           className="w-full bg-black/60 border border-white/10 rounded-lg pl-8 pr-16 py-2.5 text-[10px] font-mono text-white placeholder:text-[var(--text-muted)]/40 focus:outline-none focus:border-[#D4AF37]/50 transition-colors"
         />
         <button

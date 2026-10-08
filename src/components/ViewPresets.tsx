@@ -32,7 +32,7 @@ export default function ViewPresets({ onNavigate }: ViewPresetsProps) {
     >
       <div className="flex items-center gap-2 mb-2">
         <Globe className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
-        <span className="hud-text text-[11px] text-[var(--text-primary)] tracking-widest">REGION PRESETS</span>
+        <span className="hud-text text-[11px] text-[var(--text-primary)] tracking-widest">ПРЕСЕТЫ РЕГИОНОВ</span>
         <span className="gotham-tag gotham-tag--critical" style={{ fontSize: '9px', padding: '1px 4px', marginLeft: 'auto' }}>
           {PRESETS.filter(p => (p as any).hot).length} HOT
         </span>

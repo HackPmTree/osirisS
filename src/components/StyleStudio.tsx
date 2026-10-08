@@ -293,17 +293,17 @@ function StyleStudio({ onClose, isMobile }: { onClose: () => void; isMobile?: bo
     >
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.07] shrink-0">
         <div className="flex flex-col">
-          <span className="text-[11px] font-mono tracking-[0.22em] uppercase text-[var(--gold-light)]">Style Studio</span>
-          <span className="text-[9px] font-mono tracking-[0.1em] uppercase text-white/25">Live UI tokens</span>
+          <span className="text-[11px] font-mono tracking-[0.22em] uppercase text-[var(--gold-light)]">Студия стилей</span>
+          <span className="text-[9px] font-mono tracking-[0.1em] uppercase text-white/25">Живые токены интерфейса</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={paste} title="Paste a shared theme from the clipboard" aria-label="Paste theme" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
+          <button onClick={paste} title="Вставить общую тему из буфера обмена" aria-label="Paste theme" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
             <ClipboardPaste className="w-3.5 h-3.5" />
           </button>
-          <button onClick={copy} title="Copy this theme as JSON" aria-label="Copy theme" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
+          <button onClick={copy} title="Копировать тему в формате JSON" aria-label="Copy theme" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
             {copied ? <Check className="w-3.5 h-3.5 text-[var(--alert-green)]" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
-          <button onClick={reset} title="Reset to the active theme" aria-label="Reset" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
+          <button onClick={reset} title="Сбросить к активной теме" aria-label="Reset" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
           <button onClick={onClose} title="Close" aria-label="Close Style Studio" className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors">
@@ -341,7 +341,7 @@ function StyleStudio({ onClose, isMobile }: { onClose: () => void; isMobile?: bo
           <Row label="Info"><Swatch label="Info colour" value={s.alertBlue} onChange={v => set('alertBlue', v)} /></Row>
         </Section>
 
-        <Section title="Map controls">
+        <Section title="Элементы управления картой">
           <Row label="Pan/zoom pad">
             <Segmented
               label="On-screen pan and zoom pad"
@@ -352,7 +352,7 @@ function StyleStudio({ onClose, isMobile }: { onClose: () => void; isMobile?: bo
           </Row>
         </Section>
 
-        <Section title="Map layers">
+        <Section title="Слои карты">
           <SubHead label="Cameras" />
           <Row label="Dots &amp; labels"><ResettableSwatch label="Camera colour" value={s.map.cctv} fallback={MAP_DEFAULTS.cctv} onChange={v => setMap('cctv', v)} /></Row>
 
@@ -377,7 +377,7 @@ function StyleStudio({ onClose, isMobile }: { onClose: () => void; isMobile?: bo
           <Row label="Neutral"><ResettableSwatch label="OI arcs: neutral, evidence" value={s.map.oiNeutral} fallback={MAP_DEFAULTS.oiNeutral} onChange={v => setMap('oiNeutral', v)} /></Row>
         </Section>
 
-        <Section title="Surface">
+        <Section title="Поверхность">
           <Row label="Background"><Swatch label="Background colour" value={s.bg} onChange={setBg} /></Row>
           <Row label="Panel"><Slider label="Panel opacity" value={s.panelAlpha} min={0.2} max={1} step={0.01} onChange={v => set('panelAlpha', v)} format={v => `${Math.round(v * 100)}%`} /></Row>
           <Row label="Border"><Slider label="Border strength" value={s.borderAlpha} min={0} max={0.6} step={0.01} onChange={v => set('borderAlpha', v)} format={v => `${Math.round(v * 100)}%`} /></Row>
@@ -392,13 +392,13 @@ function StyleStudio({ onClose, isMobile }: { onClose: () => void; isMobile?: bo
           <Row label="Heading"><Swatch label="Heading text" value={s.textHeading} onChange={v => set('textHeading', v)} /></Row>
         </Section>
 
-        <Section title="Typography">
+        <Section title="Типографика">
           <Row label="UI font"><Segmented label="UI font" options={FONT_UI} value={s.fontUi} onChange={v => set('fontUi', v)} /></Row>
           <Row label="Mono font"><Segmented label="Mono font" options={FONT_MONO} value={s.fontMono} onChange={v => set('fontMono', v)} /></Row>
           <Row label="Tracking"><AutoSlider label="Mono tracking" value={s.tracking} min={-0.05} max={0.4} step={0.005} whenEnabled={0.2} onChange={v => set('tracking', v)} format={v => `${v.toFixed(2)}em`} /></Row>
         </Section>
 
-        <Section title="Motion & FX">
+        <Section title="Анимация и эффекты">
           <Row label="Speed"><Slider label="Motion speed" value={s.motion} min={0} max={2} step={0.05} onChange={v => set('motion', v)} format={v => (v === 0 ? 'off' : `${v.toFixed(2)}x`)} /></Row>
           <Row label="Scanlines"><Slider label="Scanline overlay" value={s.scanlines} min={0} max={0.2} step={0.005} onChange={v => set('scanlines', v)} format={v => (v === 0 ? 'off' : `${Math.round(v * 500)}%`)} /></Row>
           <Row label="Grain"><Slider label="Film grain overlay" value={s.grain} min={0} max={0.3} step={0.005} onChange={v => set('grain', v)} format={v => (v === 0 ? 'off' : `${Math.round(v * 333)}%`)} /></Row>

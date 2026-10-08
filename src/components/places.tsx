@@ -107,7 +107,7 @@ export function PlaceRow({ place, query = '', on, onPick, onHover, from, trailin
           {place.context && <span className="block mt-0.5 text-[11px] leading-snug truncate text-[var(--text-muted)]">{place.context}</span>}
         </span>
         <span className="flex flex-col items-end gap-0.5 flex-shrink-0 pl-1">
-          {far && <span className="text-[11px] font-mono tabular-nums text-[var(--text-secondary)]" title="From the centre of the map">{far}</span>}
+          {far && <span className="text-[11px] font-mono tabular-nums text-[var(--text-secondary)]" title="От центра карты">{far}</span>}
           <span className="text-[9px] font-mono tracking-[0.12em] uppercase text-[var(--text-muted)]">{kindLabel(kind)}</span>
         </span>
       </button>

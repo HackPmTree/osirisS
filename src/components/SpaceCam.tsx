@@ -187,7 +187,7 @@ export default function SpaceCam() {
               </span>
               <button
                 onClick={() => setExpanded(false)}
-                title="Close (Esc)"
+                title="Закрыть (Esc)"
                 className="p-1.5 rounded hover:bg-white/10 text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />

@@ -19,6 +19,8 @@ interface Props {
   onRemoveLayer: (id: string) => void;
   /** lat/lng bounds of the newest import — the page flies there. */
   onBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
+  /** Скрыть кнопку закрытия (когда панель живёт внутри левого меню слоёв). */
+  hideClose?: boolean;
 }
 
 const COLORS = ['#FF4081', '#00E5FF', '#FFD700', '#76FF03', '#FF6D00', '#B388FF'];

@@ -423,13 +423,13 @@ export default function WorldRemote({onClose,onPlaceOnMap}:{onClose?:()=>void,on
 
                         {/* Device Info */}
                         <div className="mt-2 mb-2.5 rounded-lg p-2.5" style={{background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.03)'}}>
-                          <div className="text-[9px] font-mono text-[var(--text-muted)] tracking-[0.2em] mb-1.5 font-bold">DEVICE INTEL</div>
+                          <div className="text-[9px] font-mono text-[var(--text-muted)] tracking-[0.2em] mb-1.5 font-bold">ДАННЫЕ ОБ УСТРОЙСТВЕ</div>
                           <div className="space-y-1">
                             {[{k:'Manufacturer',v:dev.manufacturer},{k:'Model',v:dev.model},{k:'Serial',v:dev.serial},{k:'Firmware',v:dev.firmware},{k:'TX Power',v:dev.txPower!=null?`${dev.txPower} dBm`:undefined}].filter(x=>x.v).map(x=>(
                               <div key={x.k} className="flex gap-2"><span className="text-[9px] font-mono text-[var(--text-muted)] w-[65px] shrink-0 tracking-wider">{x.k}</span><span className="text-[9px] font-mono text-[var(--text-primary)] truncate">{x.v}</span></div>
                             ))}
                             {dev.geo&&<div className="flex gap-2"><span className="text-[9px] font-mono text-[var(--text-muted)] w-[65px] shrink-0 tracking-wider">GPS</span><span className="text-[9px] font-mono text-[#FFB74D]">{dev.geo.lat.toFixed(5)}, {dev.geo.lng.toFixed(5)} ±{Math.round(dev.geo.acc)}m</span></div>}
-                            <div className="flex gap-2"><span className="text-[9px] font-mono text-[var(--text-muted)] w-[65px] shrink-0 tracking-wider">Extracted</span><span className="text-[9px] font-mono text-[var(--text-muted)]">{dev.serviceCount}svcs · {dev.charCount}chars · {dev.gattDump.length}vals · {dev.totalBytes}B</span></div>
+                            <div className="flex gap-2"><span className="text-[9px] font-mono text-[var(--text-muted)] w-[65px] shrink-0 tracking-wider">Извлечено</span><span className="text-[9px] font-mono text-[var(--text-muted)]">{dev.serviceCount}svcs · {dev.charCount}chars · {dev.gattDump.length}vals · {dev.totalBytes}B</span></div>
                           </div>
                         </div>
 
@@ -456,8 +456,8 @@ export default function WorldRemote({onClose,onPlaceOnMap}:{onClose?:()=>void,on
 
                         {/* GATT Explorer */}
                         <AnimatePresence>{isG&&(<motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden"><div className="mt-2.5 pt-2.5" style={{borderTop:`1px solid ${dev.color}08`}}>
-                          <div className="flex items-center justify-between mb-2"><span className="text-[9px] font-mono font-bold tracking-[0.12em]" style={{color:dev.color}}>GATT TREE</span><button onClick={()=>{setGattTarget(null);setGattSvcs([]);}}><X className="w-2.5 h-2.5 text-[var(--text-muted)]"/></button></div>
-                          {gattLoading?<div className="flex items-center justify-center py-3 gap-1.5"><div className="w-3.5 h-3.5 border-2 rounded-full animate-spin" style={{borderColor:dev.color,borderTopColor:'transparent'}}/><span className="text-[9px] font-mono animate-pulse" style={{color:dev.color}}>Enumerating...</span></div>
+                          <div className="flex items-center justify-between mb-2"><span className="text-[9px] font-mono font-bold tracking-[0.12em]" style={{color:dev.color}}>ДЕРЕВО GATT</span><button onClick={()=>{setGattTarget(null);setGattSvcs([]);}}><X className="w-2.5 h-2.5 text-[var(--text-muted)]"/></button></div>
+                          {gattLoading?<div className="flex items-center justify-center py-3 gap-1.5"><div className="w-3.5 h-3.5 border-2 rounded-full animate-spin" style={{borderColor:dev.color,borderTopColor:'transparent'}}/><span className="text-[9px] font-mono animate-pulse" style={{color:dev.color}}>Перебор...</span></div>
                           :gattSvcs.map(svc=>(<div key={svc.uuid} className="mb-0.5">
                             <button onClick={()=>setExSvc(exSvc===svc.uuid?null:svc.uuid)} className="w-full px-2 py-1.5 rounded-lg flex items-center gap-1.5 text-left hover:bg-white/[0.02]">
                               <Bluetooth className="w-2.5 h-2.5 shrink-0" style={{color:dev.color}}/><span className="text-[9px] font-mono font-bold text-[var(--text-primary)] truncate flex-1">{svc.name}</span><span className="text-[9px] font-mono" style={{color:`${dev.color}80`}}>{svc.chars.length}</span><ChevronRight className={`w-2.5 h-2.5 text-[var(--text-muted)] transition-transform ${exSvc===svc.uuid?'rotate-90':''}`}/>
@@ -487,14 +487,14 @@ export default function WorldRemote({onClose,onPlaceOnMap}:{onClose?:()=>void,on
                 {/* Network Recon */}
                 <div className="rounded-xl overflow-hidden" style={{background:'rgba(255,255,255,0.015)',border:'1px solid rgba(255,255,255,0.04)'}}>
                   <div className="px-3 py-2 flex items-center justify-between" style={{borderBottom:'1px solid rgba(255,255,255,0.03)'}}>
-                    <div className="flex items-center gap-1.5"><Globe className="w-3 h-3 text-[#80DEEA]"/><span className="text-[9px] font-mono font-bold tracking-[0.12em] text-[var(--text-primary)]">NETWORK RECON</span></div>
+                    <div className="flex items-center gap-1.5"><Globe className="w-3 h-3 text-[#80DEEA]"/><span className="text-[9px] font-mono font-bold tracking-[0.12em] text-[var(--text-primary)]">СКАНИРОВАНИЕ СЕТИ</span></div>
                     <motion.button whileTap={{scale:0.95}} onClick={runNetRecon} disabled={netLoading} className="px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wider disabled:opacity-30" style={{background:'rgba(128,222,234,0.06)',color:'#80DEEA',border:'1px solid rgba(128,222,234,0.08)'}}>{netLoading?'...':'PROBE'}</motion.button>
                   </div>
                   {!netIntel&&<div className="px-3 py-4 text-center"><span className="text-[9px] font-mono text-[var(--text-muted)] opacity-30">Tap PROBE to scan local network</span></div>}
                   {netIntel&&<div className="p-2.5 space-y-2">
-                    {netIntel.localIPs.length>0&&<div><div className="text-[9px] font-mono text-[var(--text-muted)] tracking-wider mb-1 font-bold">LOCAL IPs</div>{netIntel.localIPs.map((ip,i)=><div key={i} className="text-[10px] font-mono text-[#80DEEA] pl-2">{ip}</div>)}</div>}
+                    {netIntel.localIPs.length>0&&<div><div className="text-[9px] font-mono text-[var(--text-muted)] tracking-wider mb-1 font-bold">ЛОКАЛЬНЫЕ IP</div>{netIntel.localIPs.map((ip,i)=><div key={i} className="text-[10px] font-mono text-[#80DEEA] pl-2">{ip}</div>)}</div>}
                     {netIntel.type&&<div className="flex gap-3">{[{l:'TYPE',v:netIntel.type},{l:'DOWN',v:netIntel.downlink!=null?`${netIntel.downlink}Mbps`:undefined},{l:'RTT',v:netIntel.rtt!=null?`${netIntel.rtt}ms`:undefined}].filter(x=>x.v).map(x=><div key={x.l}><div className="text-[9px] font-mono text-[var(--text-muted)] tracking-wider">{x.l}</div><div className="text-[10px] font-mono text-[var(--text-primary)] font-bold">{x.v}</div></div>)}</div>}
-                    {netIntel.openPorts.length>0&&<div><div className="text-[9px] font-mono text-[var(--text-muted)] tracking-wider mb-1 font-bold">OPEN PORTS</div>{netIntel.openPorts.map((p,i)=><div key={i} className="flex items-center gap-2 pl-2 py-0.5"><span className="text-[9px] font-mono font-bold text-[var(--alert-green)]">:{p.port}</span><span className="text-[9px] font-mono text-[var(--text-muted)]">{p.service}</span></div>)}</div>}
+                    {netIntel.openPorts.length>0&&<div><div className="text-[9px] font-mono text-[var(--text-muted)] tracking-wider mb-1 font-bold">ОТКРЫТЫЕ ПОРТЫ</div>{netIntel.openPorts.map((p,i)=><div key={i} className="flex items-center gap-2 pl-2 py-0.5"><span className="text-[9px] font-mono font-bold text-[var(--alert-green)]">:{p.port}</span><span className="text-[9px] font-mono text-[var(--text-muted)]">{p.service}</span></div>)}</div>}
                   </div>}
                 </div>
                 {/* Export */}

@@ -355,7 +355,7 @@ function NewsCard({ item, now, open, wide, onToggle, onLocate }: {
         </div>
 
         <h4 className={`mt-1 font-sans text-[12.5px] font-medium leading-snug text-[#F2EFE8] ${open ? '' : 'line-clamp-3'}`}>
-          {item.flag && <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-[#FF3D3D]/15 px-1 text-[8.5px] font-mono font-bold tracking-wider text-[#FF6B6B]">BREAKING</span>}
+          {item.flag && <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-[#FF3D3D]/15 px-1 text-[8.5px] font-mono font-bold tracking-wider text-[#FF6B6B]">СРОЧНО</span>}
           {item.title}
         </h4>
         {!open && item.summary && (
@@ -450,7 +450,7 @@ function NewsCard({ item, now, open, wide, onToggle, onLocate }: {
 
           {item.carriers.length > 0 && (
             <div>
-              <div className="mb-1 text-[8.5px] font-mono tracking-widest text-[#5C5A54]">ALSO CARRIED BY</div>
+              <div className="mb-1 text-[8.5px] font-mono tracking-widest text-[#5C5A54]">ТАКЖЕ ПУБЛИКУЕТ</div>
               <ul className="space-y-0.5">
                 {item.carriers.map(c => (
                   <li key={c.source} className="flex items-center gap-1.5 text-[10px] font-mono">
@@ -553,7 +553,7 @@ function StatementCard({ speaker, items, now, open, wide, onToggle }: {
           </time>
         </div>
         <h4 className="mt-1 font-sans text-[12.5px] font-medium leading-snug text-[#F2EFE8]">
-          {items.some(i => i.flag) && <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-[#FF3D3D]/15 px-1 text-[8.5px] font-mono font-bold tracking-wider text-[#FF6B6B]">BREAKING</span>}
+          {items.some(i => i.flag) && <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-[#FF3D3D]/15 px-1 text-[8.5px] font-mono font-bold tracking-wider text-[#FF6B6B]">СРОЧНО</span>}
           {speaker}
           <span className="ml-1.5 whitespace-nowrap text-[9px] font-mono font-normal tracking-wider text-[#8A8880]">{items.length} STATEMENTS</span>
         </h4>
@@ -588,7 +588,7 @@ function QuakeCard({ item, now, onLocate }: { item: QuakeAlert; now: number; onL
         <button
           type="button"
           onClick={() => onLocate(item.lat, item.lng)}
-          title="Show on map"
+          title="Показать на карте"
           className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-md font-mono transition-transform hover:scale-105"
           style={{ background: `${color}1c`, border: `1px solid ${color}55`, color }}
         >
@@ -605,7 +605,7 @@ function QuakeCard({ item, now, onLocate }: { item: QuakeAlert; now: number; onL
           {(item.tsunami || item.pager) && (
             <div className="mt-1 flex flex-wrap gap-1">
               {item.tsunami && <Chip color="#448AFF"><Waves className="w-2 h-2" /> tsunami flag</Chip>}
-              {item.pager && <Chip color={PAGER_COLORS[item.pager] || '#8A8880'} title="USGS PAGER impact alert level">PAGER {item.pager}</Chip>}
+              {item.pager && <Chip color={PAGER_COLORS[item.pager] || '#8A8880'} title="Уровень угрозы воздействия USGS PAGER">PAGER {item.pager}</Chip>}
             </div>
           )}
         </div>
@@ -658,13 +658,13 @@ function WarningCard({ item, now, onLocate }: { item: WarningAlert; now: number;
         )}
 
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          <Chip color={color} title="As the issuer graded it">{item.severity} severity</Chip>
+          <Chip color={color} title="По оценке источника">{item.severity} severity</Chip>
           {left && <Chip color={left === 'expired' ? '#5C5A54' : '#8A8880'} title={`Runs until ${new Date(item.expires!).toLocaleString()}`}>{left}</Chip>}
           <div className="ml-auto flex items-center gap-1">
             <button
               type="button"
               onClick={() => onLocate(item.lat, item.lng, { zoom: 6 })}
-              title="Show where this was issued"
+              title="Показать место выпуска"
               className="inline-flex items-center gap-1 rounded border px-2 py-1 text-[9.5px] font-mono tracking-wider hover:bg-white/5"
               style={{ color, borderColor: `${color}55` }}
             >
@@ -949,7 +949,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
       {/* Search and perspective */}
       <div className="flex gap-1.5">
         <label className="relative flex-1 min-w-0">
-          <span className="sr-only">Search alerts</span>
+          <span className="sr-only">Поиск оповещений</span>
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-[#5C5A54]" />
           <input
             value={query}
@@ -971,7 +971,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
             className="w-[108px] flex-shrink-0 rounded border border-[#2A2A28] bg-[#0c0c10] px-1 py-1 text-[10px] font-mono text-[#C9C5BC] outline-none focus:border-[var(--cyan-primary)]/50"
             style={bloc !== 'all' ? { color: BLOCS[bloc].color, borderColor: `${BLOCS[bloc].color}66` } : undefined}
           >
-            <option value="all">All sides</option>
+            <option value="all">Все стороны</option>
             {BLOC_ORDER.map(b => <option key={b} value={b}>{BLOCS[b].label}</option>)}
           </select>
         )}
@@ -1128,7 +1128,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
             className="flex min-w-0 items-center gap-2 outline-none"
           >
             <Radio className="w-3.5 h-3.5 flex-shrink-0" style={{ color: ACCENT }} />
-            <span className="hud-text whitespace-nowrap text-[11px] text-[var(--text-primary)]">LIVE ALERTS</span>
+            <span className="hud-text whitespace-nowrap text-[11px] text-[var(--text-primary)]">ЖИВЫЕ ОПОВЕЩЕНИЯ</span>
             <span className="gotham-tag gotham-tag--high" style={{ fontSize: '9px', padding: '1px 5px' }}>{news.length + quakes.length}</span>
           </button>
           <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -1222,8 +1222,8 @@ function EmptyState({ text, onClear, onRetry }: { text: string; onClear?: () => 
   return (
     <div className="py-6 text-center">
       <div className="text-[11px] font-mono text-[var(--text-muted)]">{text}</div>
-      {onClear && <button onClick={onClear} className="mt-2 text-[10px] font-mono text-[var(--cyan-primary)] hover:underline">CLEAR FILTERS</button>}
-      {onRetry && <button onClick={onRetry} className="mt-2 text-[10px] font-mono text-[var(--cyan-primary)] hover:underline">TRY AGAIN</button>}
+      {onClear && <button onClick={onClear} className="mt-2 text-[10px] font-mono text-[var(--cyan-primary)] hover:underline">СБРОСИТЬ ФИЛЬТРЫ</button>}
+      {onRetry && <button onClick={onRetry} className="mt-2 text-[10px] font-mono text-[var(--cyan-primary)] hover:underline">ПОВТОРИТЬ</button>}
     </div>
   );
 }

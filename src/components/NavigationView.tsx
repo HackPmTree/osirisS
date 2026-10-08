@@ -196,7 +196,7 @@ export default function NavigationView({
             {onRecenter && !following && (
               <button
                 onClick={onRecenter}
-                title="Recenter on me and resume follow"
+                title="Центрировать на мне и продолжить слежение"
                 aria-label="Recenter on me and resume follow"
                 className="p-1.5 rounded-md text-[var(--gold-light)] bg-[rgba(var(--gold-rgb),0.14)] hover:bg-[rgba(var(--gold-rgb),0.24)] transition-colors animate-pulse"
               >
@@ -213,7 +213,7 @@ export default function NavigationView({
             </button>
             <button
               onClick={onExit}
-              title="End navigation"
+              title="Завершить навигацию"
               aria-label="End navigation"
               className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--alert-red)] transition-colors"
             >

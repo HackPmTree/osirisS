@@ -406,7 +406,7 @@ function PlaceInput({
           </button>
         )}
         {onLocate && (
-          <button type="button" onClick={onLocate} disabled={locating} title="Use my location" aria-label="Use my location"
+          <button type="button" onClick={onLocate} disabled={locating} title="Использовать моё местоположение" aria-label="Use my location"
             className="w-8 h-8 mr-0.5 rounded-md flex items-center justify-center flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--gold-light)] hover:bg-[rgba(var(--gold-rgb),0.08)] transition-colors disabled:opacity-60">
             <LocateFixed className={`w-4 h-4 ${locating ? 'animate-pulse text-[var(--gold-light)]' : ''}`} />
           </button>
@@ -418,7 +418,7 @@ function PlaceInput({
         <div role="listbox" aria-label={empty ? 'Suggestions' : 'Places found'}
           className="absolute top-full -left-[26px] -right-[42px] mt-1.5 z-[10000] rounded-xl border border-[var(--border-primary)] p-1.5 max-h-[280px] overflow-y-auto styled-scrollbar"
           style={{ background: 'var(--oi-solid)', boxShadow: '0 18px 44px rgba(0,0,0,0.75)' }}>
-          {empty && recent.length > 0 && <span className="block px-3 pt-1 pb-1 text-[9.5px] font-mono tracking-[0.14em] uppercase text-[var(--text-muted)]">Recent</span>}
+          {empty && recent.length > 0 && <span className="block px-3 pt-1 pb-1 text-[9.5px] font-mono tracking-[0.14em] uppercase text-[var(--text-muted)]">Недавние</span>}
           {options.map((r, i) => (
             <PlaceRow key={`${r.kind}-${r.label}-${r.lat}-${i}`} place={r} query={empty ? '' : value} on={i === at}
               onPick={() => choose(r)} onHover={() => setIdx(i)} from={center} kindOverride={r.recent ? 'recent' : undefined} />
@@ -690,7 +690,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
         <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(var(--gold-rgb),0.12)' }}>
           <Route className="w-4 h-4 text-[var(--gold-primary)]" />
         </span>
-        <h2 className="flex-1 text-[14px] font-semibold text-[var(--text-heading)]">Directions</h2>
+        <h2 className="flex-1 text-[14px] font-semibold text-[var(--text-heading)]">Маршруты</h2>
         {tracking && (
           <span className="flex items-center gap-1.5 h-6 px-2 rounded-full text-[9.5px] font-mono tracking-[0.12em] uppercase text-[var(--gold-light)]"
             style={{ background: 'rgba(var(--gold-rgb),0.1)', boxShadow: 'inset 0 0 0 1px rgba(var(--gold-rgb),0.3)' }}>
@@ -715,7 +715,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
           <RailRow mark={<StartMark />}>
             <PlaceInput
               value={fromText} onChange={setFromText} onPick={pickFrom} onClear={() => clearEnd('from')}
-              placeholder="Choose a start" autoFocus={!initialTo} {...bias}
+              placeholder="Выберите точку отправления" autoFocus={!initialTo} {...bias}
               onLocate={useMyLocation} locating={locating} liveFix={live} recent={recent}
             />
           </RailRow>
@@ -738,11 +738,11 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
           <RailRow mark={<EndMark />} last>
             <PlaceInput
               value={toText} onChange={setToText} onPick={pickTo} onClear={() => clearEnd('to')}
-              placeholder="Choose a destination" {...bias} liveFix={live} recent={recent}
+              placeholder="Выберите пункт назначения" {...bias} liveFix={live} recent={recent}
             />
           </RailRow>
         </div>
-        <button onClick={swap} aria-label="Swap start and destination" title="Swap start and destination"
+        <button onClick={swap} aria-label="Swap start and destination" title="Поменять начало и конец"
           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-[var(--border-secondary)] bg-black/40 text-[var(--text-secondary)] hover:text-[var(--gold-light)] hover:border-[var(--border-active)] transition-colors">
           <ArrowUpDown className="w-3.5 h-3.5" />
         </button>
@@ -811,7 +811,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
               <AlertTriangle className="w-4.5 h-4.5 text-[var(--alert-red)]" />
             </span>
             <p className="mt-2.5 text-[13px] text-[var(--text-heading)]">{error}</p>
-            <p className="mt-1 text-[11.5px] text-[var(--text-muted)]">Try a different point, or another way of travelling.</p>
+            <p className="mt-1 text-[11.5px] text-[var(--text-muted)]">Попробуйте другую точку или иной способ передвижения.</p>
           </div>
         )}
 
@@ -828,7 +828,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                       {locating ? <Loader2 className="w-4 h-4 animate-spin text-[var(--gold-light)]" /> : <LocateFixed className="w-4 h-4 text-[var(--gold-light)]" />}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[13px] text-[var(--text-heading)]">Start from my location</span>
+                      <span className="block text-[13px] text-[var(--text-heading)]">Начать от моего местоположения</span>
                       <span className="block text-[11px] text-[var(--text-muted)]">{to ? `Then the route to ${to.label}` : 'Then choose where to go'}</span>
                     </span>
                   </button>
@@ -836,7 +836,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                 {locateError && <p className="px-1 text-[11px] text-[var(--gold-light)]">{locateError}</p>}
                 {recent.length > 0 && (
                   <div>
-                    <span className="block px-1 pb-1 text-[9.5px] font-mono tracking-[0.14em] uppercase text-[var(--text-muted)]">Recent places</span>
+                    <span className="block px-1 pb-1 text-[9.5px] font-mono tracking-[0.14em] uppercase text-[var(--text-muted)]">Недавние места</span>
                     <div className="flex flex-col gap-0.5">
                       {recent.slice(0, 4).map((r, i) => (
                         <PlaceRow key={`${r.label}-${r.lat}-${i}`} place={r} on={false} onPick={() => pickRecent(r)} from={center} kindOverride="recent" />
@@ -846,7 +846,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                 )}
                 <div className="px-1 flex flex-wrap items-center gap-1.5">
                   <span className="text-[9.5px] font-mono tracking-[0.14em] uppercase text-[var(--text-muted)] mr-0.5">Try</span>
-                  <span className="instrument-sample">Heathrow</span>
+                  <span className="instrument-sample">Хитроу</span>
                   <span className="instrument-sample">10 Downing St</span>
                   <span className="instrument-sample">51.5074, -0.1278</span>
                 </div>
@@ -879,7 +879,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                     <span className="text-[26px] leading-none font-mono font-light tabular-nums text-[var(--text-heading)]" style={{ textShadow: '0 0 20px rgba(var(--gold-rgb),0.2)' }}>
                       {formatDuration(route.duration)}
                     </span>
-                    {chosen === 0 && routes.length > 1 && <span className="text-[9.5px] font-mono tracking-[0.12em] uppercase text-[var(--gold-light)]">Fastest</span>}
+                    {chosen === 0 && routes.length > 1 && <span className="text-[9.5px] font-mono tracking-[0.12em] uppercase text-[var(--gold-light)]">Быстрейший</span>}
                   </div>
                   <div className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-[var(--text-secondary)] tabular-nums">
                     <span>{formatDistance(route.distance)}</span>
@@ -892,7 +892,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                 {(route.hasToll || route.hasHighway || route.hasFerry) && (
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     {route.hasToll && <span className="h-5 px-1.5 rounded flex items-center text-[9px] font-mono tracking-[0.1em] uppercase border border-[rgba(var(--gold-rgb),0.35)] text-[var(--gold-light)]">Toll</span>}
-                    {route.hasHighway && <span className="h-5 px-1.5 rounded flex items-center text-[9px] font-mono tracking-[0.1em] uppercase border border-[var(--border-secondary)] text-[var(--text-secondary)]">Motorway</span>}
+                    {route.hasHighway && <span className="h-5 px-1.5 rounded flex items-center text-[9px] font-mono tracking-[0.1em] uppercase border border-[var(--border-secondary)] text-[var(--text-secondary)]">Автомагистраль</span>}
                     {route.hasFerry && <span className="h-5 px-1.5 rounded flex items-center text-[9px] font-mono tracking-[0.1em] uppercase border border-[var(--border-secondary)] text-[var(--text-secondary)]">Ferry</span>}
                   </div>
                 )}
