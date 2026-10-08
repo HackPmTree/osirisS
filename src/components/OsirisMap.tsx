@@ -44,7 +44,7 @@ interface OsirisMapProps {
   onViewStateChange?: (vs: { zoom: number; latitude: number }) => void;
   /** `alertId` also opens that Live Alert's pin once the camera arrives.
    *  `duration` overrides the default 2 s flight. */
-  flyToLocation?: { lat: number; lng: number; zoom?: number; alertId?: string; duration?: number; ts: number } | null;
+  flyToLocation?: { lat: number; lng: number; zoom?: number; alertId?: string; duration?: number; ts: number; bounds?: { west: number; south: number; east: number; north: number } } | null;
   /** Fires once, when the map has drawn its first complete frame. */
   onReady?: () => void;
   /** Which Live Alerts to pin — the reports the feed is showing. Null pins them all. */
@@ -2585,7 +2585,15 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
   useEffect(() => {
     if (!mapReady || !mapRef.current || !flyToLocation) return;
     const map = mapRef.current;
-    map.flyTo({ center: [flyToLocation.lng, flyToLocation.lat], zoom: flyToLocation.zoom ?? 8, duration: flyToLocation.duration ?? 2000 });
+    // An imported layer hands over its bounding box — fit the whole map to it.
+    if (flyToLocation.bounds) {
+      const b = flyToLocation.bounds;
+      try {
+        map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 48, duration: flyToLocation.duration ?? 1500, maxZoom: 14 });
+      } catch { /* degenerate bounds on a globe projection — fall through */ }
+    } else {
+      map.flyTo({ center: [flyToLocation.lng, flyToLocation.lat], zoom: flyToLocation.zoom ?? 8, duration: flyToLocation.duration ?? 2000 });
+    }
     const alertId = flyToLocation.alertId;
     if (!alertId) return;
     const open = () => openAlertPinRef.current?.(alertId);
