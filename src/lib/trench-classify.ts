@@ -98,15 +98,19 @@ export function classifySegment(m: SegmentMetrics): ClassificationResult {
     score -= 0.2;
   }
 
-  // Минимальная осмысленная длина
+  // Минимальная осмысленная длина — ЖЁСТКОЕ правило (как в Python-движке):
+  // короткий огрызок (<30 м) не может быть подтверждён как окоп, независимо
+  // от остальных метрик. Раньше это был лишь штраф −0.6, из-за чего
+  // 15-метровые обрывки проходили фильтр с высокой уверенностью.
   if (m.lengthM < MIN_TRENCH_LENGTH_M) {
-    reasons.push('Слишком короткий сегмент — недостаточно данных');
-    score -= 0.6;
+    reasons.push('Слишком короткий сегмент (<30 м) — недостаточно данных, отбраковка');
+    score = Math.min(score, 0.2);
+    hardReject = true;
   }
 
   const confidence = Math.min(1, Math.max(0, score));
   return {
-    isTrench: confidence >= 0.55,
+    isTrench: confidence >= 0.55 && !hardReject,
     confidence: Number(confidence.toFixed(2)),
     reasons,
   };

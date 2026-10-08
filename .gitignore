@@ -1,4 +1,5 @@
-__pycache__/
-*.pyc
+# Dependencies
 node_modules/
+
+# Build artifacts
 tsconfig.tsbuildinfo
