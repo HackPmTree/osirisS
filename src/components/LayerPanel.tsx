@@ -259,9 +259,17 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
       );
     }
     if (group.custom === 'trench') {
-      // Если страница не прокинула props модуля — панель скрыта, но переключатель слоя остаётся.
-      if (!trenchProps) return null;
-      return <TrenchScanner {...trenchProps} />;
+      // Модуль работает и без props страницы: тогда доступны автоскан области
+      // вокруг нуля координат и список сохранённых укреплений.
+      return (
+        <TrenchScanner
+          center={trenchProps?.center ?? [50.284959, 37.681517]}
+          zoom={trenchProps?.zoom ?? 11}
+          shapes={trenchProps?.shapes}
+          onStartDrawLine={trenchProps?.onStartDrawLine}
+          onSaved={trenchProps?.onSaved}
+        />
+      );
     }
     return null;
   };

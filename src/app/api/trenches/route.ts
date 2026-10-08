@@ -20,8 +20,8 @@ import { checkRateLimit, clientKey, rateLimitResponse } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs'; // файловое хранилище требует Node.js runtime
 
-/** Общая проверка лимита: 10 запросов в минуту на клиент. */
-function guard(req: NextRequest): NextResponse | null {
+/** Общая проверка лимита: 10 запросов в минуту на клиента. */
+function guard(req: NextRequest): Response | null {
   const res = checkRateLimit(clientKey(req), 10, 60_000);
   return res.ok ? null : rateLimitResponse(res);
 }
@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
 
   const feature: TrenchFeature = {
     ...parsed.data,
+    // properties необязателен в схеме Zod, но хранилище ждёт объект — нормализуем.
+    geometry: { ...parsed.data.geometry, properties: parsed.data.geometry.properties ?? {} },
     createdAt: parsed.data.createdAt ?? Date.now(),
     type: 'trench', // серверный инвариант, независимо от тела запроса
   };

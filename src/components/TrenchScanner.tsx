@@ -1,61 +1,76 @@
 /**
  * TrenchScanner — «Картограф укреплений» (Trench Mapper).
  *
- * Инструмент ручного обвода окопов полилинией + запуск CV-сканирования
- * области с фильтром «окоп vs дорога». Сохранение отправляется на сервер
- * в формате GeoJSON (POST /api/trenches, пометка type: 'trench').
+ * Полностью рабочий модуль, встроенный в левое меню (группа «ОКОПЫ»):
+ *  1) Ручной обвод: кнопка «Рисовать: Полилиния» включает режим рисования
+ *     карты; готовые фигуры попадают сюда через проп `shapes` и проверяются
+ *     кнопкой «Проверить обводы» — серверный фильтр «окоп vs дорога»
+ *     (POST /api/trench-scan с autosave) сохраняет подтверждённые линии.
+ *  2) Автоскан: «Сканировать область» запускает CV-пайплайн по видимому
+ *     bbox (Python-движок OpenCV при наличии TRENCH_ENGINE_URL, иначе —
+ *     локальная геометрия-эвристика).
+ *  3) Список сохранённых укреплений: GET /api/trenches, удаление DELETE.
  *
+ * Сохранение — GeoJSON с пометкой type:'trench' (см. src/lib/trench-store.ts).
  * UI полностью на русском; тяжёлые запросы ограничены на сервере
  * (rate limit 10/мин) — клиент показывает понятное сообщение о лимите.
  */
 
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Crosshair, Save, Trash2, ScanLine, MapPin, CheckCircle2, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Save, Trash2, ScanLine, MapPin, CheckCircle2, XCircle, RefreshCw, PencilRuler } from 'lucide-react';
 
-export interface TrenchDraft {
-  /** Вершины полилинии обвода [lat, lon] — порядок = порядок кликов. */
-  points: [number, number][];
+/** Одна линия из хранилища укреплений (ответ GET /api/trenches → geojson.features). */
+interface TrenchRow {
+  id?: string;
+  properties?: { name?: string; source?: string; confidence?: number };
+  geometry?: { type: string; coordinates: [number, number][] };
+}
+
+/** Фигура ручного рисования карты (структура DrawnShape из src/lib/draw.ts). */
+export interface DrawnShapeLike {
+  id: string;
+  name: string;
+  kind: string; // 'line' | 'polygon' | 'rectangle' | 'circle'
+  geojson: { geometry: { type: string; coordinates: any } };
 }
 
 interface TrenchScannerProps {
-  /** Активен ли режим ручного обвода («Полилиния») — управляется картой. */
-  drawActive: boolean;
-  onToggleDraw: () => void;
-  /** Текущий черновик обвода (карта пишет в него при кликах). */
-  draft: TrenchDraft;
-  onClearDraft: () => void;
-  /** Центр карты — используется как bbox для сканирования. */
+  /** Центр карты [lat, lon] — используется как область сканирования. */
   center: [number, number];
   zoom: number;
-  /** Оповестить родителя об изменении слоя (после сохранения). */
+  /** Готовые фигуры ручного рисования карты (обводы оператора). */
+  shapes?: DrawnShapeLike[];
+  /** Включить режим рисования полилинией на карте (управляет страница). */
+  onStartDrawLine?: () => void;
+  /** Оповестить родителя об изменении слоя (чтобы карта перезагрузила окопы). */
   onSaved?: () => void;
 }
 
 type Status = { kind: 'idle' | 'busy' | 'ok' | 'error'; text: string };
 
-/** Сформировать GeoJSON Feature из вершин обвода. */
-export function draftToGeoJSON(points: [number, number][], name: string) {
-  return {
-    type: 'Feature' as const,
-    geometry: {
-      type: 'LineString' as const,
-      // GeoJSON использует порядок [долгота, широта]
-      coordinates: points.map(([lat, lon]) => [lon, lat]),
-    },
-    properties: { name, osiris_type: 'trench' },
-  };
+/** Вершины фигуры в GeoJSON-порядке [lon, lat]. */
+function shapeCoords(s: DrawnShapeLike): [number, number][] {
+  const g = s.geojson?.geometry;
+  if (!g) return [];
+  if (g.type === 'LineString') return g.coordinates as [number, number][];
+  if (g.type === 'Polygon') {
+    const ring = (g.coordinates as [number, number][][])?.[0] ?? [];
+    // Без повторяющейся замыкающей точки: кольцо — это замкнутый контур обвода.
+    return ring.length > 1 ? ring.slice(0, -1) : ring;
+  }
+  return [];
 }
 
-/** Приблизительная длина ломаной в км (гаверсинг). */
-function lengthKm(points: [number, number][]): number {
-  const R = 6371;
+/** Приблизительная длина ломаной в метрах (гаверсинг). */
+function lengthM(points: [number, number][]): number {
+  const R = 6371000;
   const rad = (d: number) => (d * Math.PI) / 180;
   let s = 0;
   for (let i = 1; i < points.length; i++) {
-    const [a1, o1] = points[i - 1];
-    const [a2, o2] = points[i];
+    const [o1, a1] = points[i - 1]; // GeoJSON-порядок: [lon, lat]
+    const [o2, a2] = points[i];
     const h =
       Math.sin(rad(a2 - a1) / 2) ** 2 +
       Math.cos(rad(a1)) * Math.cos(rad(a2)) * Math.sin(rad(o2 - o1) / 2) ** 2;
@@ -65,53 +80,72 @@ function lengthKm(points: [number, number][]): number {
 }
 
 export default function TrenchScanner({
-  drawActive, onToggleDraw, draft, onClearDraft, center, zoom, onSaved,
+  center, zoom, shapes = [], onStartDrawLine, onSaved,
 }: TrenchScannerProps) {
-  const [name, setName] = useState('');
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' });
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [rows, setRows] = useState<TrenchRow[]>([]);
 
-  /* ── Сохранение обвода: GeoJSON → POST /api/trenches ─────────────── */
-  const save = useCallback(async () => {
-    if (draft.points.length < 2) {
-      setStatus({ kind: 'error', text: 'Обведите окоп полилинией (минимум 2 точки).' });
+  /* ── Загрузка сохранённых укреплений для списка ───────────────────── */
+  const refresh = useCallback(async () => {
+    try {
+      const r = await fetch('/api/trenches', { cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && Array.isArray(j?.geojson?.features)) setRows(j.geojson.features);
+    } catch {
+      /* Сервер недоступен — список просто остаётся прежним. */
+    }
+  }, []);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  /** Линии/полигоны оператора, пригодные для проверки фильтром. */
+  const lineShapes = shapes
+    .map((s) => ({ s, coords: shapeCoords(s) }))
+    .filter(({ coords }) => coords.length >= 2);
+
+  /* ── Проверка обводов: геометрия-фильтр «окоп vs дорога» + autosave ── */
+  const checkDrawings = useCallback(async () => {
+    if (lineShapes.length === 0) {
+      setStatus({ kind: 'error', text: 'Нет обводов. Нажмите «Рисовать: Полилиния», обведите линию на карте и завершите Enter.' });
       return;
     }
-    setStatus({ kind: 'busy', text: 'Сохранение…' });
-    const id = `trench-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    const feature = {
-      id,
-      type: 'trench' as const,
-      name: name.trim() || `Укрепление ${new Date().toLocaleTimeString('ru-RU')}`,
-      source: 'manual' as const,
-      geometry: draftToGeoJSON(draft.points, name.trim() || 'Окоп (ручной обвод)'),
-      lengthKm: Number(lengthKm(draft.points).toFixed(3)),
-      createdAt: Date.now(),
-    };
+    setStatus({ kind: 'busy', text: 'Проверка обводов (фильтр «окоп vs дорога»)…' });
+    const half = Math.min(0.25, 3 / Math.max(1, zoom));
+    const [lat, lon] = center;
     try {
-      const r = await fetch('/api/trenches', {
+      const r = await fetch('/api/trench-scan', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(feature),
+        body: JSON.stringify({
+          bbox: [lon - half, lat - half, lon + half, lat + half],
+          lines: lineShapes.map(({ coords }) => coords),
+          autosave: true,
+        }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setStatus({ kind: 'error', text: j?.detail || j?.error || `Ошибка сохранения (${r.status}).` });
+      if (r.status === 429) {
+        setStatus({ kind: 'error', text: j?.detail || 'Лимит: 10 запросов в минуту.' });
         return;
       }
-      setStatus({ kind: 'ok', text: 'Сохранено в слой укреплений.' });
-      onClearDraft();
-      setName('');
+      if (!r.ok) {
+        setStatus({ kind: 'error', text: j?.detail || j?.error || `Ошибка проверки (${r.status}).` });
+        return;
+      }
+      const feats: TrenchRow[] = j?.geojson?.features ?? [];
+      const rejected = (j?.scanned ?? lineShapes.length) - feats.length;
+      setScanResult(`Подтверждено окопов: ${feats.length}. Отбраковано (дороги/ЛЭП): ${Math.max(0, rejected)}. Сохранено в слой укреплений.`);
+      setStatus({ kind: 'ok', text: 'Готово — окопы добавлены на карту.' });
+      await refresh();
       onSaved?.();
     } catch {
       setStatus({ kind: 'error', text: 'Сервер недоступен. Попробуйте позже.' });
     }
-  }, [draft.points, name, onClearDraft, onSaved]);
+  }, [center, zoom, lineShapes, onSaved, refresh]);
 
-  /* ── CV-сканирование области вокруг центра карты ──────────────────── */
+  /* ── Автоскан видимой области (OpenCV-движок или эвристика) ───────── */
   const scan = useCallback(async () => {
-    setStatus({ kind: 'busy', text: 'Сканирование (фильтр «окоп vs дорога»)…' });
-    // bbox ~ сторона квадрата, подогнанная под зум (0.5° максимум — лимит схемы)
+    setStatus({ kind: 'busy', text: 'Сканирование области…' });
     const half = Math.min(0.25, 3 / Math.max(1, zoom));
     const [lat, lon] = center;
     const bbox = [lon - half, lat - half, lon + half, lat + half];
@@ -119,7 +153,7 @@ export default function TrenchScanner({
       const r = await fetch('/api/trench-scan', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ bbox, autosave: false }),
+        body: JSON.stringify({ bbox, autosave: true }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 429) {
@@ -131,71 +165,119 @@ export default function TrenchScanner({
         return;
       }
       const n = Array.isArray(j?.geojson?.features) ? j.geojson.features.length : 0;
-      setScanResult(`Подтверждено кандидатов-окопов: ${n}. Отбраковано (дороги/ЛЭП): ${j?.scanned != null ? Math.max(0, j.scanned - n) : '—'}.`);
+      setScanResult(
+        `Кандидатов-окопов подтверждено: ${n}. Движок: ${j?.engine === 'python-opencv' ? 'OpenCV (полный пайплайн)' : 'локальная эвристика (по геометрии линий)'}.`,
+      );
       setStatus({ kind: 'ok', text: 'Сканирование завершено.' });
+      await refresh();
       onSaved?.();
     } catch {
       setStatus({ kind: 'error', text: 'Сервер недоступен. Попробуйте позже.' });
     }
-  }, [center, zoom, onSaved]);
+  }, [center, zoom, onSaved, refresh]);
 
-  const len = draft.points.length >= 2 ? lengthKm(draft.points) : 0;
+  /* ── Удаление записи ──────────────────────────────────────────────── */
+  const remove = useCallback(async (id?: string) => {
+    if (!id) return;
+    try {
+      const r = await fetch(`/api/trenches?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (r.ok) {
+        setRows((prev) => prev.filter((row) => row.id !== id));
+        setStatus({ kind: 'ok', text: 'Запись удалена из слоя укреплений.' });
+        onSaved?.();
+      } else {
+        setStatus({ kind: 'error', text: 'Не удалось удалить запись.' });
+      }
+    } catch {
+      setStatus({ kind: 'error', text: 'Сервер недоступен.' });
+    }
+  }, [onSaved]);
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-3 space-y-2">
-      <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-[var(--text-primary)]">
-        <MapPin className="w-3.5 h-3.5" style={{ color: '#8D6E63' }} />
-        КАРТОГРАФ УКРЕПЛЕНИЙ
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-[var(--text-primary)]">
+          <MapPin className="w-3.5 h-3.5" style={{ color: '#8D6E63' }} />
+          КАРТОГРАФ УКРЕПЛЕНИЙ
+        </div>
+        <button
+          onClick={() => void refresh()}
+          title="Обновить список укреплений"
+          className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        >
+          <RefreshCw className="w-3 h-3" />
+        </button>
       </div>
 
-      {/* Инструмент «Полилиния» для ручного обвода */}
-      <button
-        onClick={onToggleDraw}
-        className={`w-full flex items-center justify-center gap-2 rounded px-2 py-1.5 text-[10px] font-semibold transition-colors ${
-          drawActive
-            ? 'bg-[#8D6E63] text-white'
-            : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-        }`}
-      >
-        <Crosshair className="w-3 h-3" />
-        {drawActive ? 'Обвод активен — кликайте по карте' : 'Рисовать: Полилиния обвода'}
-      </button>
-
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value.slice(0, 120))}
-        placeholder="Название (необязательно)"
-        className="w-full rounded bg-[var(--bg-tertiary)] px-2 py-1 text-[10px] text-[var(--text-primary)] outline-none border border-transparent focus:border-[var(--border)]"
-      />
-
-      <div className="flex items-center justify-between text-[9px] text-[var(--text-muted)]">
-        <span>Точек: {draft.points.length}</span>
-        <span>{len > 0 ? `Длина: ${(len * 1000).toFixed(0)} м` : '—'}</span>
+      {/* Инструкция: два шага ручного обвода */}
+      <div className="rounded bg-[var(--bg-tertiary)] p-2 text-[9px] leading-relaxed text-[var(--text-secondary)]">
+        <span className="font-semibold text-[var(--text-primary)]">1.</span> Нажмите «Рисовать: Полилиния»,
+        кликните точки вдоль окопа на карте, завершите Enter.
+        {' '}<span className="font-semibold text-[var(--text-primary)]">2.</span> «Проверить обводы» — фильтр
+        «окоп vs дорога» сохранит подтверждённые линии в слой.
       </div>
 
       <div className="flex gap-1.5">
         <button
-          onClick={save}
-          disabled={draft.points.length < 2 || status.kind === 'busy'}
+          onClick={() => {
+            if (onStartDrawLine) {
+              onStartDrawLine();
+              setStatus({ kind: 'idle', text: 'Режим полилинии включён — кликайте точки обвода на карте.' });
+            } else {
+              setStatus({ kind: 'error', text: 'Инструмент рисования недоступен в этом режиме.' });
+            }
+          }}
+          className="flex-1 flex items-center justify-center gap-2 rounded bg-[#8D6E63] px-2 py-1.5 text-[10px] font-semibold text-white"
+        >
+          <PencilRuler className="w-3 h-3" /> Рисовать: Полилиния
+        </button>
+        <button
+          onClick={checkDrawings}
+          disabled={status.kind === 'busy' || lineShapes.length === 0}
           className="flex-1 flex items-center justify-center gap-1 rounded bg-[#2E7D32] px-2 py-1.5 text-[10px] font-bold text-white disabled:opacity-40"
+          title="Проверить готовые обводы фильтром «окоп vs дорога» и сохранить подтверждённые"
         >
-          <Save className="w-3 h-3" /> Сохранить
+          <Save className="w-3 h-3" /> Проверить обводы ({lineShapes.length})
         </button>
-        <button
-          onClick={scan}
-          disabled={status.kind === 'busy'}
-          className="flex-1 flex items-center justify-center gap-1 rounded bg-[var(--bg-tertiary)] px-2 py-1.5 text-[10px] font-bold text-[var(--text-primary)] disabled:opacity-40"
-          title="CV-сканирование видимой области (OpenCV-фильтр «окоп vs дорога», лимит 10 зап./мин)"
-        >
-          <ScanLine className="w-3 h-3" /> Сканировать
-        </button>
-        <button
-          onClick={() => { onClearDraft(); setScanResult(null); }}
-          className="rounded bg-[var(--bg-tertiary)] px-2 py-1.5 text-[var(--text-muted)] hover:text-[#FF3D57]"
-          title="Очистить обвод"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
+      </div>
+
+      <button
+        onClick={scan}
+        disabled={status.kind === 'busy'}
+        className="w-full flex items-center justify-center gap-1 rounded bg-[var(--bg-tertiary)] px-2 py-1.5 text-[10px] font-bold text-[var(--text-primary)] disabled:opacity-40"
+        title="CV-сканирование видимой области (лимит 10 зап./мин)"
+      >
+        <ScanLine className="w-3 h-3" /> Сканировать область
+      </button>
+
+      {/* Список сохранённых укреплений */}
+      <div className="max-h-36 overflow-y-auto rounded border border-[var(--border)] divide-y divide-[var(--border)]">
+        {rows.length === 0 && (
+          <div className="p-2 text-[9px] text-[var(--text-muted)]">
+            Сохранённых укреплений нет. Обведите линию и нажмите «Проверить обводы».
+          </div>
+        )}
+        {rows.map((row, i) => {
+          const len = row.geometry?.coordinates ? lengthM(row.geometry.coordinates) : 0;
+          const conf = row.properties?.confidence;
+          return (
+            <div key={row.id ?? i} className="flex items-center gap-2 px-2 py-1.5">
+              <span className="w-4 h-0.5 shrink-0 rounded" style={{ background: '#5D4037' }} aria-hidden />
+              <span className="flex-1 truncate text-[9px] text-[var(--text-secondary)]">
+                {row.properties?.name ?? 'Укрепление'}
+                {len > 0 && <span className="text-[var(--text-muted)]"> · {Math.round(len)} м</span>}
+                {typeof conf === 'number' && <span className="text-[var(--text-muted)]"> · {(conf * 100).toFixed(0)}%</span>}
+              </span>
+              <button
+                onClick={() => void remove(row.id)}
+                title="Удалить из слоя укреплений"
+                className="shrink-0 rounded p-1 text-[var(--text-muted)] hover:text-[#FF3D57]"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {status.text && (
