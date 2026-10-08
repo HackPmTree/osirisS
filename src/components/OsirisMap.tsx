@@ -1051,7 +1051,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
               const bits = [d.registration, d.typeCode, d.operator].filter(Boolean)
                 .map((x: string) => htmlEsc(String(x))).join(' · ');
               el.innerHTML =
-                `<div style="color:#E8E6E0;font-size:11px;line-height:1.35;">${htmlEsc(d.model || 'Unidentified type')}</div>` +
+                `<div style="color:#E8E6E0;font-size:11px;line-height:1.35;">${htmlEsc(d.model || 'Тип не определён')}</div>` +
                 (bits ? `<div style="color:#78909C;font-size:9px;margin-top:2px;">${bits}</div>` : '');
             })
             .catch(() => {});
@@ -1135,7 +1135,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const coords = (e.features[0].geometry as any).coordinates;
       popup(coords, `<div style="${pStyle}border:1px solid rgba(255,149,0,0.3);">
         <div style="color:#FF9500;font-size:14px;font-weight:700;margin-bottom:4px;">M${p.magnitude} EARTHQUAKE</div>
-        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;">${htmlEsc(p.place||'Unknown location')}</div>
+        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;">${htmlEsc(p.place||'Местоположение неизвестно')}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;">
           <div><span style="color:#5C5A54;">DEPTH</span><br/><span style="color:#E8E6E0;">${p.depth||'—'}km</span></div>
           <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}, ${coords[0].toFixed(3)}</span></div>
@@ -1271,7 +1271,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
           <div style="color:#FF1744;font-size:12px;font-weight:700;letter-spacing:0.1em;text-shadow:0 0 4px rgba(255,23,68,0.5);">[ ${htmlEsc(tType)} ]</div>
           <div style="color:#5C5A54;font-size:9px;">${htmlEsc(place)}</div>
         </div>
-        <div style="color:#E8E6E0;font-size:11px;font-weight:bold;margin-bottom:2px;">${htmlEsc(p.malware || 'Unclassified payload')}</div>
+        <div style="color:#E8E6E0;font-size:11px;font-weight:bold;margin-bottom:2px;">${htmlEsc(p.malware || 'Неклассифицированная полезная нагрузка')}</div>
         ${host ? `<div style="color:#5C5A54;font-size:9px;margin-bottom:10px;">${htmlEsc(host)}</div>` : '<div style="margin-bottom:10px;"></div>'}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;margin-bottom:8px;background:rgba(0,0,0,0.3);padding:6px;border-radius:4px;">
           <div><span style="color:#5C5A54;">HOST</span><br/><span style="color:#00E5FF;font-family:monospace;">${htmlEsc(p.ip)}:${htmlEsc(String(p.port ?? 0))}</span></div>
@@ -1392,7 +1392,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
       popup(coords, `<div style="${pStyle}border:1px solid ${kindColor}4d;">
         <div style="color:${kindColor};font-size:12px;font-weight:700;margin-bottom:6px;">${kindLabel}</div>
-        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${htmlEsc(p.name||'Unclassified incident')}</div>
+        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${htmlEsc(p.name||'Неклассифицированный инцидент')}</div>
         ${src !== '#' ? `<a href="${src}" target="_blank" rel="noopener noreferrer" style="${linkStyle}flex:1;text-align:center;color:${kindColor};border:1px solid ${kindColor}66;background:${kindColor}26;display:inline-block;width:100%;box-sizing:border-box;margin-top:4px;">[ OPEN SOURCE ↗ ]</a>` : ''}
       </div>`);
     });
@@ -1405,7 +1405,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const color = p.severity === 'war' ? '#FF1744' : p.severity === 'high' ? '#FF9500' : '#FFD500';
       popup(coords, `<div style="${pStyle}border:1px solid ${color}40;">
         <div style="color:${color};font-size:12px;font-weight:700;margin-bottom:6px;">⚠️ ${htmlEsc(p.label || 'WARNING EVENT')}</div>
-        <div style="font-size:10px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${htmlEsc(p.description || 'Global event detected at this location.')}</div>
+        <div style="font-size:10px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${htmlEsc(p.description || 'Глобальное событие, обнаруженное в этой точке.')}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;margin-bottom:8px;">
           <div><span style="color:#5C5A54;">SEVERITY</span><br/><span style="color:${color};">${(p.severity||'unknown').toUpperCase()}</span></div>
           <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
@@ -1467,14 +1467,14 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
           <div style="color:${c};font-size:12px;font-weight:700;letter-spacing:0.12em;">BOTNET C2 SERVER</div>
           <div style="font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:0.1em;background:${c}20;color:${c};border:1px solid ${c}50;">${htmlEsc((p.status || 'unknown').toUpperCase())}</div>
         </div>
-        <div style="color:#E8E6E0;font-size:11px;font-weight:bold;margin-bottom:10px;">${htmlEsc(p.malware || 'Family not reported')}</div>
+        <div style="color:#E8E6E0;font-size:11px;font-weight:bold;margin-bottom:10px;">${htmlEsc(p.malware || 'Семейство не указано')}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;margin-bottom:8px;background:rgba(0,0,0,0.35);padding:8px;border-radius:4px;border:1px solid rgba(255,255,255,0.04);">
           ${row('C2 ADDRESS', htmlEsc(p.ip || '—'), '#00E5FF', true)}
           ${row('PORT', htmlEsc(String(p.port ?? '—')), '#FFD600', true)}
-          ${row('HOSTED IN', htmlEsc(p.country || 'Not reported'))}
+          ${row('HOSTED IN', htmlEsc(p.country || 'Не указано'))}
           ${row('AS', htmlEsc(p.as_number ? `AS${p.as_number}` : '—'), '#E8E6E0', true)}
-          ${row('FIRST SEEN', htmlEsc(p.first_seen || 'Not reported'))}
-          ${row('LAST ONLINE', htmlEsc(p.last_online || 'Not reported'))}
+          ${row('FIRST SEEN', htmlEsc(p.first_seen || 'Не указано'))}
+          ${row('LAST ONLINE', htmlEsc(p.last_online || 'Не указано'))}
         </div>
         ${p.hostname ? `<div style="font-size:9px;color:#8A8880;margin-bottom:8px;font-family:monospace;word-break:break-all;">${htmlEsc(p.hostname)}</div>` : ''}
         <div style="font-size:8px;color:#5C5A54;line-height:1.5;margin-bottom:8px;">Blocklist entry, not an observed attack. Marker sits at the hosting country's centroid, not the host's location.</div>
@@ -1617,7 +1617,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const iconEmoji = p.icon === 'cyclone' ? '🌀' : p.icon === 'volcano' ? '🌋' : p.icon === 'flood' ? '🌊' : p.icon === 'drought' ? '🏜️' : p.icon === 'ice' ? '🧊' : p.icon === 'weather' ? '⚠️' : '⚡';
       popup(coords, `<div style="${pStyle}border:1px solid rgba(224,64,251,0.3);">
         <div style="color:#E040FB;font-size:14px;font-weight:700;margin-bottom:6px;">${iconEmoji} ${p.type || 'Weather Event'}</div>
-        <div style="font-size:10px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${p.title || 'Unknown event'}</div>
+        <div style="font-size:10px;color:#E8E6E0;margin-bottom:8px;line-height:1.4;">${p.title || 'Неизвестное событие'}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;margin-bottom:8px;">
           <div><span style="color:#5C5A54;">SEVERITY</span><br/><span style="color:${p.severity === 'high' ? '#FF1744' : '#FFD700'};">${(p.severity||'low').toUpperCase()}</span></div>
           <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
@@ -2371,7 +2371,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
             properties: { 
               label: (e.title || 'CONFLICT EVENT').substring(0, 60).toUpperCase(),
               severity: 'war',
-              description: e.title || 'Live conflict event detected by GDELT.',
+              description: e.title || 'Конфликтное событие, обнаруженное GDELT в реальном времени.',
               sourceUrl: e.url || '',
             },
           }));

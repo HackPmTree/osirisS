@@ -5,15 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, X } from 'lucide-react';
 
 const SHORTCUTS = [
-  { key: 'F', desc: 'Toggle fullscreen' },
-  { key: 'S', desc: 'Share current view' },
-  { key: 'L', desc: 'Toggle layer panel' },
-  { key: 'M', desc: 'Toggle markets panel' },
-  { key: 'O', desc: 'Ask OI' },
-  { key: 'I', desc: 'Toggle intel feed' },
-  { key: 'R', desc: 'Reset to global view' },
-  { key: '?', desc: 'Show this help' },
-  { key: 'ESC', desc: 'Close panels / popups' },
+  { key: 'F', desc: 'Полноэкранный режим' },
+  { key: 'S', desc: 'Поделиться текущим видом' },
+  { key: 'L', desc: 'Панель слоёв' },
+  { key: 'M', desc: 'Панель рынков' },
+  { key: 'O', desc: 'Спросить OI' },
+  { key: 'I', desc: 'Лента разведданных' },
+  { key: 'R', desc: 'Сброс к глобальному виду' },
+  { key: '?', desc: 'Показать эту справку' },
+  { key: 'ESC', desc: 'Закрыть панели / попапы' },
 ];
 
 export default function KeyboardShortcuts() {

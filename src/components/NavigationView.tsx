@@ -186,7 +186,7 @@ export default function NavigationView({
               </div>
             )}
             <div className={`text-[14px] leading-snug ${arrived ? 'text-[var(--gold-light)]' : 'text-[var(--text-heading)]'}`}>
-              {arrived ? `You have arrived at ${destinationLabel}` : step?.instruction ?? 'Starting…'}
+              {arrived ? `Вы прибыли в ${destinationLabel}` : step?.instruction ?? 'Начало маршрута…'}
             </div>
           </div>
 

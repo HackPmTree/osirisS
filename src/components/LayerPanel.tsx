@@ -286,8 +286,11 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   if (isMobile) {
     return (
       <div className="flex flex-col gap-5 py-2">
-        {visibleGroups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-2">
+        {visibleGroups.map((group, index) => (
+          /* Ключ должен включать индекс: в массиве групп есть дубликаты label
+             (например, две группы «УГРОЗЫ»), что вызывало ошибку React
+             "Encountered two children with the same key". */
+          <div key={`${group.label}-${index}`} className="flex flex-col gap-2">
             <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/30 border-b border-white/[0.06] pb-1.5">
               {group.fullLabel}
             </div>
@@ -376,7 +379,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
       }}
     >
       <div className="flex-1 flex flex-col items-center gap-1">
-        {visibleGroups.map((group) => {
+        {visibleGroups.map((group, index) => {
           /* Sub-layers modify a parent rather than draw anything of their own,
              so they do not count towards the rail's reading. */
           const counted = group.layers.filter(l => !l.parent);
@@ -390,7 +393,8 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
 
           return (
             <div
-              key={group.label}
+              /* Уникальный ключ: label не уникален (две группы «УГРОЗЫ») */
+              key={`${group.label}-${index}`}
               className="relative flex items-center justify-center"
               onMouseEnter={() => setHoveredGroup(group.label)}
               onMouseLeave={() => setHoveredGroup(null)}

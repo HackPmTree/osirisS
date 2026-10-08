@@ -244,7 +244,7 @@ function toQuake(raw: unknown): QuakeAlert | null {
     id: str(eq.id) ?? `${lat},${lng},${time}`,
     ts: time,
     magnitude,
-    place: str(eq.place) ?? 'Unknown location',
+    place: str(eq.place) ?? 'Местоположение неизвестно',
     depth: numOrNull(eq.depth),
     url: webUrl(eq.url),
     tsunami: Boolean(eq.tsunami),
@@ -268,7 +268,7 @@ export function toWarning(raw: unknown): WarningAlert | null {
   const severity = w.severity === 'high' || w.severity === 'medium' ? w.severity : 'low';
   const type = str(w.type) ?? str(w.category) ?? 'Warning';
   const area = str(w.area);
-  const provider = str(w.provider) ?? 'Official warning';
+  const provider = str(w.provider) ?? 'Официальное предупреждение';
 
   return {
     kind: 'warning',
@@ -365,7 +365,7 @@ function NewsCard({ item, now, open, wide, onToggle, onLocate }: {
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
           {item.alertKind !== 'news' && <Chip color={kind.color}>{kind.label}</Chip>}
           {item.place && (
-            <Chip color={kind.color} title={`Pinned to ${item.place.label} — the place the post names`}>
+            <Chip color={kind.color} title={`Привязано к ${item.place.label} — месту, названному в посте`}>
               <MapPin className="w-2 h-2" /> <span className="max-w-[110px] truncate normal-case">{item.place.name}</span>
             </Chip>
           )}
@@ -377,12 +377,12 @@ function NewsCard({ item, now, open, wide, onToggle, onLocate }: {
             </Chip>
           )}
           {item.carriers.length > 0 && (
-            <Chip color="#00E5FF" title={`Also carried by ${item.carriers.map(c => c.source_name).join(', ')}`}>
+            <Chip color="#00E5FF" title={`Также передано источниками: ${item.carriers.map(c => c.source_name).join(', ')}`}>
               <Layers className="w-2 h-2" /> +{item.carriers.length} channel{item.carriers.length > 1 ? 's' : ''}
             </Chip>
           )}
           {item.forwarded_from && (
-            <Chip title={`Forwarded from ${item.forwarded_from.name}`}>
+            <Chip title={`Переслано из ${item.forwarded_from.name}`}>
               <Repeat2 className="w-2 h-2" /> <span className="max-w-[110px] truncate normal-case">{item.forwarded_from.name}</span>
             </Chip>
           )}
@@ -505,7 +505,7 @@ function NewsCard({ item, now, open, wide, onToggle, onLocate }: {
               <button
                 type="button"
                 onClick={() => onLocate(item.coords![0], item.coords![1])}
-                title={item.anchor ? `Approximate: the centroid for "${item.anchor}", not the event location` : 'Approximate location'}
+                title={item.anchor ? `Приблизительно: центроид для «${item.anchor}», не место события` : 'Приблизительное местоположение'}
                 className="inline-flex items-center gap-1 rounded border border-white/10 px-2 py-1 text-[9.5px] font-mono tracking-wider text-[#9B978E] hover:bg-white/5"
               >
                 <MapPin className="w-2.5 h-2.5" /> ≈ {(item.anchor || 'region').toUpperCase()}
@@ -659,7 +659,7 @@ function WarningCard({ item, now, onLocate }: { item: WarningAlert; now: number;
 
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
           <Chip color={color} title="По оценке источника">{item.severity} severity</Chip>
-          {left && <Chip color={left === 'expired' ? '#5C5A54' : '#8A8880'} title={`Runs until ${new Date(item.expires!).toLocaleString()}`}>{left}</Chip>}
+          {left && <Chip color={left === 'expired' ? '#5C5A54' : '#8A8880'} title={`Действует до ${new Date(item.expires!).toLocaleString()}`}>{left}</Chip>}
           <div className="ml-auto flex items-center gap-1">
             <button
               type="button"
@@ -899,7 +899,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
       label: 'QUAKE',
       value: `M${rightNow.biggest.magnitude.toFixed(1)}`,
       color: quakeColor(rightNow.biggest.magnitude),
-      title: `Largest earthquake in the last day — ${rightNow.biggest.place}`,
+      title: `Крупнейшее землетрясение за сутки — ${rightNow.biggest.place}`,
       onClick: () => selectTab('quakes'),
     }] : []),
   ];
@@ -1065,7 +1065,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
   ) : list.length === 0 ? (
     filtersActive
       ? <EmptyState text="No alerts match these filters" onClear={clearFilters} />
-      : <EmptyState text={tab === 'quakes' ? 'No recent earthquakes' : tab === 'warnings' ? 'No warnings in force' : 'No reports — the sources did not answer'} onRetry={onRefresh ? refresh : undefined} />
+      : <EmptyState text={tab === 'quakes' ? 'Нет недавних землетрясений' : tab === 'warnings' ? 'Действующих предупреждений нет' : 'Нет сообщений — источники не ответили'} onRetry={onRefresh ? refresh : undefined} />
   ) : (
     <div className="space-y-3">
       {grouped.map(group => (
@@ -1177,7 +1177,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed, onRefresh, pin
           ) : (
             <span>CONNECTING…</span>
           )}
-          {fetchedAt && <span title={`Feed fetched ${new Date(fetchedAt).toLocaleString()}`}>· UPDATED {timeAgo(fetchedAt, now).toUpperCase()}</span>}
+          {fetchedAt && <span title={`Лента получена ${new Date(fetchedAt).toLocaleString()}`}>· ОБНОВЛЕНО {timeAgo(fetchedAt, now).toUpperCase()}</span>}
           {breakingCount > 0 && <span className="text-[#FF6B6B]">· {breakingCount} BREAKING</span>}
         </div>
       </div>

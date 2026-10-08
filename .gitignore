@@ -1,2 +1,2 @@
-node_modules/
+# TypeScript build artifacts
 tsconfig.tsbuildinfo

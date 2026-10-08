@@ -215,7 +215,7 @@ export function useFingerprintSearch() {
     };
     const settle = (id: string, patch: Partial<Source>) =>
       setSources(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
-    const message = (e: unknown) => (e instanceof Error ? e.message : 'Lookup failed');
+    const message = (e: unknown) => (e instanceof Error ? e.message : 'Запрос не выполнен');
 
     /* ── username: streamed sweep ── */
     if (type === 'username') {
@@ -227,7 +227,7 @@ export function useFingerprintSearch() {
         });
         if (!res.ok || !res.body) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Search failed (${res.status})`);
+          throw new Error(body.error || `Поиск не выполнен (${res.status})`);
         }
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -268,7 +268,7 @@ export function useFingerprintSearch() {
               completed = true;
               finish('done', (ev.found || []).length);
             } else if (ev.type === 'error') {
-              throw new Error(ev.error || 'Search failed');
+              throw new Error(ev.error || 'Поиск не выполнен');
             }
           }
           if (checked) {
@@ -292,8 +292,8 @@ export function useFingerprintSearch() {
     if (type === 'email') {
       const domain = q.split('@').pop() || '';
       setSources([
-        { id: 'breach', label: 'Breach exposure', via: 'XposedOrNot', state: 'pending' },
-        { id: 'mail', label: 'Mail domain', via: `DNS · ${domain}`, state: 'pending' },
+        { id: 'breach', label: 'Утечки данных', via: 'XposedOrNot', state: 'pending' },
+        { id: 'mail', label: 'Почтовый домен', via: `DNS · ${domain}`, state: 'pending' },
       ]);
       const outcomes = await Promise.allSettled([
         getJson(`/api/osint/leaks?email=${encodeURIComponent(q)}`).then(
@@ -315,7 +315,7 @@ export function useFingerprintSearch() {
     }
 
     /* ── phone: numbering-plan intelligence ── */
-    setSources([{ id: 'number', label: 'Number intelligence', via: 'libphonenumber', state: 'pending' }]);
+    setSources([{ id: 'number', label: 'Разведка по номеру', via: 'libphonenumber', state: 'pending' }]);
     try {
       const d = await getJson(`/api/osint/phone?number=${encodeURIComponent(q)}`);
       settle('number', { state: 'done', data: d });
@@ -539,7 +539,7 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
               key={`${h.at}-${i}`}
               onClick={() => fp.run(h.type, h.query)}
               className="border-t border-[var(--border-primary)]/50 cursor-pointer hover:bg-[var(--hover-accent)]"
-              title={`Search ${h.query} again`}
+              title={`Повторить поиск ${h.query}`}
             >
               <td className="px-3 py-1.5 text-[var(--text-primary)] truncate max-w-[140px]">{h.query}</td>
               <td className="px-1 py-1.5 text-[var(--text-muted)]">{h.type}</td>
@@ -887,9 +887,9 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
                   ['E.164', s.data?.number],
                   ['International', s.data?.international],
                   ['National', s.data?.national],
-                  ['Country code', s.data?.country_code],
+                  ['Код страны', s.data?.country_code],
                   ['Region', s.data?.region_code && s.data.region_code !== 'Unknown' ? `${s.data.region} (${s.data.region_code})` : s.data?.region],
-                  ['Line type', s.data?.line_type?.replace(/_/g, ' ')],
+                  ['Тип линии', s.data?.line_type?.replace(/_/g, ' ')],
                 ].filter(([, v]) => v).map(([k, v, c]) => (
                   <div key={k} className="min-w-0">
                     <div className="text-[8px] font-mono tracking-widest text-[var(--text-muted)]">{String(k).toUpperCase()}</div>

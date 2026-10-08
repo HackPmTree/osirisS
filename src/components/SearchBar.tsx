@@ -218,7 +218,7 @@ export default function SearchBar({ onLocate, center = null, onClose, onDirectio
           onChange={e => search(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Поиск мест, адресов или координат"
-          aria-label="Search places"
+          aria-label="Поиск мест"
           role="combobox"
           aria-expanded={items.length > 0}
           aria-controls={listId}
