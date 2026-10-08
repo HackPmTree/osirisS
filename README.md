@@ -176,7 +176,7 @@ OSIRIS — это production-платформа разведки с открыт
 ## Быстрый старт
 
 ```bash
-git clone https://github.com/osiris-osint/osiris.git
+git clone https://github.com/HackPmTree/osirisS.git
 cd osiris
 npm install
 npm run dev
@@ -187,7 +187,7 @@ npm run dev
 ### Docker / самостоятельный хостинг
 
 ```bash
-git clone https://github.com/osiris-osint/osiris.git
+git clone https://github.com/HackPmTree/osirisS.git
 cd osiris
 cp .env.template .env     # опционально — настройте ключи / порт
 docker compose up -d
