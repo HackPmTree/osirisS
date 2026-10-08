@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Satellite, Sun, AlertTriangle, Camera,
   CloudLightning, Ship, Network, Database, Ghost,
-  Flame, Tv, Radio, Mountain, Anchor, Megaphone, SlidersHorizontal
+  Flame, Tv, Radio, Mountain, Anchor, Megaphone, SlidersHorizontal, Shovel
 } from 'lucide-react';
 import StyleStudio from './StyleStudio';
 import GeoImportPanel, { type ImportedLayer } from './GeoImportPanel';
+import TrenchScanner from './TrenchScanner';
 import { TERRAIN_MIN_ZOOM, type TerrainStatus } from '@/lib/map-terrain';
 import { MapPinned } from 'lucide-react';
 
@@ -33,6 +34,8 @@ interface LayerPanelProps {
   onAddImportedLayer?: (layer: ImportedLayer) => void;
   onRemoveImportedLayer?: (id: string) => void;
   onImportBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
+  /** Прокидывается из страницы в модуль «Картограф укреплений» (левое меню). */
+  trenchProps?: React.ComponentProps<typeof TrenchScanner>;
 }
 
 interface LayerDef {
@@ -54,8 +57,8 @@ interface LayerGroupDef {
   fullLabel: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   layers: LayerDef[];
-  /** Встроенная нестандартная панель вместо списка слоёв (импорт карты). */
-  custom?: 'geoimport';
+  /** Встроенная нестандартная панель вместо списка слоёв (импорт карты, окопы). */
+  custom?: 'geoimport' | 'trench';
 }
 
 const LAYER_GROUPS: LayerGroupDef[] = [
@@ -157,6 +160,16 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     custom: 'geoimport' as const,
   },
   {
+    /* Модуль «Картограф укреплений» — в левом меню, рядом с импортом карты. */
+    label: 'ОКОПЫ',
+    fullLabel: 'КАРТОГРАФ УКРЕПЛЕНИЙ (ОКОПЫ)',
+    icon: Shovel,
+    layers: [
+      { key: 'trenches', label: 'Слой укреплений', description: 'Сохранённые окопы · тёмно-коричневые линии', dataKey: '' },
+    ],
+    custom: 'trench' as const,
+  },
+  {
     label: 'ВИД',
     fullLabel: 'ОТОБРАЖЕНИЕ',
     icon: Sun,
@@ -217,7 +230,7 @@ function SubLayerStem() {
   );
 }
 
-function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true }: LayerPanelProps) {
+function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true, importedLayers = [], onAddImportedLayer, onRemoveImportedLayer, onImportBounds, trenchProps }: LayerPanelProps) {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   /**
    * A pinned group stays open when the pointer leaves. Hover-only flyouts are
@@ -226,6 +239,32 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
    */
   const [pinnedGroup, setPinnedGroup] = useState<string | null>(null);
   const [studioOpen, setStudioOpen] = useState(false);
+
+  /** Ширина летящей панели: у встроенных панелей (импорт карты, окопы) она больше. */
+  const flyoutWidth = (group: LayerGroupDef) =>
+    group.custom ? 'min-w-[300px]' : 'min-w-[220px]';
+
+  /** Встроенная панель группы: импорт карты или «Картограф укреплений».
+   *  Ранее ветка custom нигде не рендерилась — обе панели были недоступны. */
+  const renderCustom = (group: LayerGroupDef) => {
+    if (group.custom === 'geoimport') {
+      return (
+        <GeoImportPanel
+          importedLayers={importedLayers ?? []}
+          onAddLayer={(l) => onAddImportedLayer?.(l)}
+          onRemoveLayer={(id) => onRemoveImportedLayer?.(id)}
+          onBounds={onImportBounds}
+          hideClose
+        />
+      );
+    }
+    if (group.custom === 'trench') {
+      // Если страница не прокинула props модуля — панель скрыта, но переключатель слоя остаётся.
+      if (!trenchProps) return null;
+      return <TrenchScanner {...trenchProps} />;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (!pinnedGroup) return;
@@ -294,6 +333,8 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
             <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/30 border-b border-white/[0.06] pb-1.5">
               {group.fullLabel}
             </div>
+            {/* Встроенная панель (импорт карты / окопы) — над списком переключателей. */}
+            {group.custom && renderCustom(group)}
             <div className="flex flex-col gap-1">
               {group.layers.map((layer) => {
                 const isLayerActive = activeLayers[layer.key];
@@ -321,7 +362,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                   </button>
                 );
               })}
-              {group.label === 'DISPLAY' && terrainDetails}
+              {group.label === 'ВИД' && terrainDetails}
             </div>
           </div>
         ))}
@@ -452,7 +493,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                     animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, x: -4, filter: 'blur(2px)' }}
                     transition={{ duration: 0.18, ease: 'easeOut' }}
-                    className="absolute left-[52px] top-1/2 -translate-y-1/2 min-w-[220px] rounded-xl p-3 z-[100] pointer-events-auto"
+                    className={`absolute left-[52px] top-1/2 -translate-y-1/2 ${flyoutWidth(group)} rounded-xl p-3 z-[100] pointer-events-auto`}
                     style={{
                       background: 'rgba(0,0,0,0.6)',
                       backdropFilter: 'blur(40px) saturate(1.5)',
@@ -483,6 +524,12 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                         </button>
                       )}
                     </div>
+                    {/* Встроенная панель группы: импорт карты / «Картограф укреплений». */}
+                    {group.custom && (
+                      <div className="max-h-[60vh] overflow-y-auto styled-scrollbar mb-2">
+                        {renderCustom(group)}
+                      </div>
+                    )}
                     <div className="flex flex-col gap-0.5">
                       {group.layers.map((layer) => {
                         const isLayerActive = activeLayers[layer.key];
@@ -512,7 +559,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                           </button>
                         );
                       })}
-                      {group.label === 'DISPLAY' && terrainDetails}
+                      {group.label === 'ВИД' && terrainDetails}
                     </div>
                   </motion.div>
                 )}

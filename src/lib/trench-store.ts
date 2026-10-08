@@ -25,8 +25,14 @@ export interface TrenchFeature {
   id: string;
   /** Всегда 'trench' (см. ТЗ: пометка типа в хранилище). */
   type: typeof TRENCH_FEATURE_TYPE;
-  /** GeoJSON Feature: LineString (полилиния обвода) или Polygon. */
-  geometry: GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon>;
+  /** GeoJSON Feature (LineString/Polygon) с координатами [lon, lat]. */
+  geometry: {
+    type: 'Feature';
+    properties: Record<string, unknown>;
+    geometry:
+      | { type: 'LineString'; coordinates: [number, number][] }
+      | { type: 'Polygon'; coordinates: [number, number][][] };
+  };
   /** Название объекта (по умолчанию «Укрепление N»). */
   name: string;
   /** Источник: ручная полилиния оператора либо результат CV-сканирования. */

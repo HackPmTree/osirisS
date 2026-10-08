@@ -21,6 +21,8 @@ interface Props {
   onBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
   /** Скрыть кнопку закрытия (когда панель живёт внутри левого меню слоёв). */
   hideClose?: boolean;
+  /** Закрыть попап панели (используется только когда hideClose не задан). */
+  onClose?: () => void;
 }
 
 const COLORS = ['#FF4081', '#00E5FF', '#FFD700', '#76FF03', '#FF6D00', '#B388FF'];
@@ -51,7 +53,7 @@ function firstPoint(geojson: any): { lat: number; lng: number } | null {
   return null;
 }
 
-export default function GeoImportPanel({ importedLayers, onAddLayer, onRemoveLayer, onBounds }: Props) {
+export default function GeoImportPanel({ importedLayers, onAddLayer, onRemoveLayer, onBounds, hideClose, onClose }: Props) {
   const [link, setLink] = useState('');
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -139,12 +141,22 @@ export default function GeoImportPanel({ importedLayers, onAddLayer, onRemoveLay
         <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold tracking-widest text-[var(--cyan-primary)]">
           <MapPinned className="w-3.5 h-3.5" /> ИМПОРТ КАРТЫ
         </div>
-        {importedLayers.length > 0 && (
-          <button onClick={exportAll} title="Сохранить все импортированные слои в GeoJSON" aria-label="Экспорт в GeoJSON"
-            className="text-white/40 hover:text-white transition-colors p-1">
-            <Download className="w-3.5 h-3.5" />
-          </button>
-        )}
+        <span className="flex items-center gap-1">
+          {importedLayers.length > 0 && (
+            <button onClick={exportAll} title="Сохранить все импортированные слои в GeoJSON" aria-label="Экспорт в GeoJSON"
+              className="text-white/40 hover:text-white transition-colors p-1">
+              <Download className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {/* Кнопка закрытия — только когда панель открыта как попап;
+              внутри левого меню слоёв она скрыта (hideClose). */}
+          {!hideClose && onClose && (
+            <button onClick={onClose} title="Закрыть панель" aria-label="Закрыть панель импорта"
+              className="text-white/40 hover:text-white transition-colors p-1">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </span>
       </div>
 
       <p className="text-[9px] font-mono text-[var(--text-muted)] leading-relaxed">
