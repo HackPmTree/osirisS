@@ -567,7 +567,7 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
             <Fingerprint className="w-4 h-4" style={{ color: ACCENT }} />
           </span>
           <div className="text-[11px] font-mono font-bold tracking-wider text-[var(--text-primary)]">SEARCH PUBLIC PROFILES</div>
-          <div className="text-[10px] font-mono text-[var(--text-muted)] mt-0.5">Enter a query above to get started.</div>
+          <div className="text-[10px] font-mono text-[var(--text-muted)] mt-0.5">Введите запрос выше, чтобы начать.</div>
         </div>
         {historyLog}
       </div>
@@ -583,9 +583,9 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
       <div className={isFullScreen ? 'flex flex-col gap-3' : 'flex flex-col gap-1.5'}>
         {isFullScreen && (
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-secondary)]">FILTERS</span>
+            <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-secondary)]">ФИЛЬТРЫ</span>
             {fp.categories.length > 0 && (
-              <button onClick={() => fp.setCategories([])} className="text-[9px] font-mono text-[var(--text-muted)] hover:text-white hover:underline">Clear all</button>
+              <button onClick={() => fp.setCategories([])} className="text-[9px] font-mono text-[var(--text-muted)] hover:text-white hover:underline">Очистить всё</button>
             )}
           </div>
         )}
@@ -622,7 +622,7 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
           })}
         </div>
         <div className={isFullScreen ? 'flex flex-col gap-1 pt-2 border-t border-[var(--border-primary)]' : 'flex flex-wrap gap-1'}>
-          {isFullScreen && <span className="text-[9px] font-mono tracking-widest text-[var(--text-muted)] mb-0.5">ALSO SHOW</span>}
+          {isFullScreen && <span className="text-[9px] font-mono tracking-widest text-[var(--text-muted)] mb-0.5">ТАКЖЕ ПОКАЗАТЬ</span>}
           <Toggle on={fp.showUnsure} label="Unsure" count={counts.unsure} color={STATUS_META.unverifiable.color} onClick={() => fp.setShowUnsure(!fp.showUnsure)} />
           <Toggle on={fp.showBlocked} label="Blocked / no answer" count={counts.blocked} color={STATUS_META.blocked.color} onClick={() => fp.setShowBlocked(!fp.showBlocked)} />
         </div>
@@ -664,9 +664,9 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
         <table className="w-full text-[10px] font-mono">
           <thead>
             <tr className="text-[9px] tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)]/40">
-              <th className="text-left font-normal px-2.5 py-1.5">PLATFORM</th>
+              <th className="text-left font-normal px-2.5 py-1.5">ПЛАТФОРМА</th>
               <th className="text-left font-normal px-2 py-1.5">PROFILE</th>
-              {isFullScreen && <th className="text-left font-normal px-2 py-1.5">CATEGORY</th>}
+              {isFullScreen && <th className="text-left font-normal px-2 py-1.5">КАТЕГОРИЯ</th>}
               <th className="text-left font-normal px-2 py-1.5">STATUS</th>
               {isFullScreen && <th className="text-right font-normal px-2.5 py-1.5">RESPONSE</th>}
             </tr>
@@ -833,7 +833,7 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
               const breaches: string[] = s.data?.breaches || [];
               const exposed: string[] = s.data?.data_exposed || [];
               return breaches.length === 0 ? (
-                <div className="text-[10px] font-mono text-[#00E676]">Not found in any known breach corpus.</div>
+                <div className="text-[10px] font-mono text-[#00E676]">Не найдено ни в одной известной базе утечек.</div>
               ) : (
                 <>
                   <div className="text-[10px] font-mono text-[#FF9500] mb-1.5">Appears in {breaches.length} known {breaches.length === 1 ? 'breach' : 'breaches'}</div>
@@ -845,7 +845,7 @@ export default function FingerprintSearch({ fp, isFullScreen }: { fp: Fingerprin
                   </div>
                   {exposed.length > 0 && (
                     <>
-                      <div className="text-[9px] font-mono tracking-widest text-[var(--text-muted)] mb-1">DATA CLASSES EXPOSED</div>
+                      <div className="text-[9px] font-mono tracking-widest text-[var(--text-muted)] mb-1">УТЕЧЁННЫЕ ДАННЫЕ</div>
                       <div className="flex flex-wrap gap-1">
                         {exposed.map(d => (
                           <span key={d} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-primary)]">{d}</span>

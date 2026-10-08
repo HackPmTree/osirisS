@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
      everywhere except Vercel, so Docker and the platform both get what they
      expect. */
   output: process.env.VERCEL ? undefined : 'standalone',
+  /* Разрешаем доступ к dev-серверу по локальной сети (иначе Next блокирует HMR с чужих хостов) */
+  allowedDevOrigins: ['192.154.2.147', '192.168.*.*', '10.*.*.*'],
   serverExternalPackages: ['ws'],
   transpilePackages: ['react-map-gl', 'mapbox-gl', 'maplibre-gl'],
   // Type errors block the build again. They were suppressed while 17 stood

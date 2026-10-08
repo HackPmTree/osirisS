@@ -110,7 +110,7 @@ export default function SatelliteCard({ sat, onClose }: { sat: SatelliteDetail; 
           onClick={onClose}
           className="-mr-1 -mt-1 flex-shrink-0 rounded-md p-1 text-[var(--text-muted)] transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
           aria-label="Clear satellite selection"
-          title="Clear selection (Esc)"
+          title="Сбросить выбор (Esc)"
         >
           <X className="h-3 w-3" />
         </button>
@@ -138,7 +138,7 @@ export default function SatelliteCard({ sat, onClose }: { sat: SatelliteDetail; 
       <div className="flex items-center gap-1.5 border-t border-[var(--border-secondary)] px-2.5 py-1.5 text-[8px] font-mono tracking-[0.12em] text-[var(--text-muted)]">
         <Orbit className="h-2.5 w-2.5" />
         {sat.track === 'loading' && <span>PLOTTING ORBIT…</span>}
-        {sat.track === 'ready' && <span style={{ color: accent }}>ORBIT TRACK ON GLOBE</span>}
+        {sat.track === 'ready' && <span style={{ color: accent }}>ОРБИТАЛЬНАЯ ТРАЕКТОРИЯ НА ГЛОБУСЕ</span>}
         {sat.track === 'unavailable' && <span>NO TRACK — TLE UNAVAILABLE</span>}
       </div>
 

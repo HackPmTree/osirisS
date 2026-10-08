@@ -171,17 +171,17 @@ export default function DrawingToolbar({
         <div className="px-4 py-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2 mb-2">
             <Pentagon className="w-3.5 h-3.5 text-[var(--cyan-primary)]" />
-            <span className="text-[12px] font-mono tracking-[0.2em] text-white/90 font-bold">DRAWING TOOLS</span>
+            <span className="text-[12px] font-mono tracking-[0.2em] text-white/90 font-bold">ИНСТРУМЕНТЫ РИСОВАНИЯ</span>
           </div>
           
           <div className="flex items-center justify-between text-[10px] font-mono text-white/50 bg-white/5 rounded px-2 py-1.5 border border-white/[0.04]">
             <div className="flex flex-col">
-              <span className="text-[10px] tracking-wider mb-0.5 uppercase">Tracked Area</span>
+              <span className="text-[10px] tracking-wider mb-0.5 uppercase">Отслеживаемая область</span>
               <span className="text-[12px] text-[var(--cyan-primary)] font-bold">{totalArea.toFixed(1)} km²</span>
             </div>
             <div className="w-[1px] h-6 bg-white/10" />
             <div className="flex flex-col text-right">
-              <span className="text-[10px] tracking-wider mb-0.5 uppercase">AOIs / Perim</span>
+              <span className="text-[10px] tracking-wider mb-0.5 uppercase">Области / Периметр</span>
               <span className="text-[12px] text-white/80">{polygons.length} / {totalPerim.toFixed(1)}km</span>
             </div>
           </div>
@@ -332,7 +332,7 @@ export default function DrawingToolbar({
                           <Radar className={`w-3 h-3 ${watched?.has(polygon.id) ? 'animate-pulse' : ''}`} />
                         </button>
                       )}
-                      <button onClick={(e) => { e.stopPropagation(); handleCopy(polygon); }} className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition" title="Copy GeoJSON">
+                      <button onClick={(e) => { e.stopPropagation(); handleCopy(polygon); }} className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition" title="Копировать GeoJSON">
                         {copied === polygon.id ? <Check className="w-3 h-3 text-[var(--alert-green)]" /> : <Copy className="w-3 h-3" />}
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); onDeletePolygon(polygon.id); }} className="p-1.5 rounded bg-[#FF3D57]/10 hover:bg-[#FF3D57]/20 text-[#FF3D57]/60 hover:text-[#FF3D57] transition" title="Delete">
@@ -363,12 +363,12 @@ export default function DrawingToolbar({
                     return (
                       <div className="mt-2 pt-2 border-t border-white/[0.06]">
                         <div className="flex items-baseline gap-2 mb-1.5">
-                          <span className="text-[10px] font-mono tracking-[0.2em] text-white/40">CONTENTS</span>
+                          <span className="text-[10px] font-mono tracking-[0.2em] text-white/40">СОДЕРЖИМОЕ</span>
                           <span className="text-[11px] font-mono text-white tabular-nums">{report.total.toLocaleString()}</span>
                           <span className="text-[10px] font-mono text-white/30">object{report.total === 1 ? "" : "s"}</span>
                         </div>
                         {report.total === 0 && (
-                          <p className="text-[10px] font-mono text-white/30 pb-1">Nothing tracked inside this area.</p>
+                          <p className="text-[10px] font-mono text-white/30 pb-1">Внутри этой области ничего не отслеживается.</p>
                         )}
                         {report.groups.map(g => (
                           <div key={g.key} className="mb-1.5">

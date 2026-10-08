@@ -8,7 +8,9 @@ import {
   Flame, Tv, Radio, Mountain, Anchor, Megaphone, SlidersHorizontal
 } from 'lucide-react';
 import StyleStudio from './StyleStudio';
+import GeoImportPanel, { type ImportedLayer } from './GeoImportPanel';
 import { TERRAIN_MIN_ZOOM, type TerrainStatus } from '@/lib/map-terrain';
+import { MapPinned } from 'lucide-react';
 
 interface LayerPanelProps {
   data: any;
@@ -26,6 +28,11 @@ interface LayerPanelProps {
   on3DModeSelected?: () => void;
   /** False while the splash is up; the rail slides in when it turns true. */
   revealed?: boolean;
+  /** Импортированные карты (Яндекс/KML/GeoJSON/GPX) — панель в левом меню слоёв. */
+  importedLayers?: ImportedLayer[];
+  onAddImportedLayer?: (layer: ImportedLayer) => void;
+  onRemoveImportedLayer?: (id: string) => void;
+  onImportBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
 }
 
 interface LayerDef {
@@ -47,107 +54,116 @@ interface LayerGroupDef {
   fullLabel: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   layers: LayerDef[];
+  /** Встроенная нестандартная панель вместо списка слоёв (импорт карты). */
+  custom?: 'geoimport';
 }
 
 const LAYER_GROUPS: LayerGroupDef[] = [
   {
     label: 'SDK',
-    fullLabel: 'OSIRIS SDK',
+    fullLabel: 'ОСИРИС SDK',
     icon: Network,
     layers: [
-      { key: 'sdk_sea', label: 'Maritime Lines', dataKey: 'sdk_entities' },
-      { key: 'live_clouds', label: 'Live Clouds', description: 'NOAA satellites · lit in 3D · hourly', dataKey: '' },
+      { key: 'sdk_sea', label: 'Морские линии', dataKey: 'sdk_entities' },
+      { key: 'live_clouds', label: 'Облака в реальном времени', description: 'Спутники NOAA · подсветка в 3D · каждый час', dataKey: '' },
     ],
   },
   {
-    label: 'AVIATION',
-    fullLabel: 'AVIATION',
+    label: 'АВИА',
+    fullLabel: 'АВИАЦИЯ',
     icon: Plane,
     layers: [
-      { key: 'flights', label: 'Commercial', dataKey: 'commercial_flights' },
-      { key: 'private', label: 'Private', dataKey: 'private_flights' },
-      { key: 'jets', label: 'Private Jets', dataKey: 'private_jets' },
-      { key: 'military', label: 'Military', dataKey: 'military_flights' },
+      { key: 'flights', label: 'Гражданские', dataKey: 'commercial_flights' },
+      { key: 'private', label: 'Частные', dataKey: 'private_flights' },
+      { key: 'jets', label: 'Частные джеты', dataKey: 'private_jets' },
+      { key: 'military', label: 'Военные', dataKey: 'military_flights' },
     ],
   },
   {
-    label: 'MARITIME',
-    fullLabel: 'MARITIME',
+    label: 'МОРЕ',
+    fullLabel: 'МОРСКОЙ ФЛОТ',
     icon: Ship,
     layers: [
-      { key: 'maritime', label: 'Maritime / Naval', dataKey: 'maritime_ships,maritime_ports,maritime_chokepoints' },
+      { key: 'maritime', label: 'Морской / Военно-морской', dataKey: 'maritime_ships,maritime_ports,maritime_chokepoints' },
     ],
   },
   {
-    label: 'SPACE',
-    fullLabel: 'SPACE TRACKING',
+    label: 'КОСМОС',
+    fullLabel: 'ОТСЛЕЖИВАНИЕ КОСМОСА',
     icon: Satellite,
     layers: [
-      { key: 'satellites', label: 'All Satellites', dataKey: 'satellites' },
-      { key: 'sat_comms', label: 'Starlink / Comms', dataKey: 'satellites', catKey: 'comms' },
-      { key: 'sat_military', label: 'Military / Intel', dataKey: 'satellites', catKey: 'military' },
-      { key: 'sat_navigation', label: 'GPS / Navigation', dataKey: 'satellites', catKey: 'navigation' },
-      { key: 'sat_earth', label: 'Earth Observation', dataKey: 'satellites', catKey: 'earth_obs' },
-      { key: 'sat_science', label: 'Stations / Telescopes', dataKey: 'satellites', catKey: 'science' },
+      { key: 'satellites', label: 'Все спутники', dataKey: 'satellites' },
+      { key: 'sat_comms', label: 'Starlink / Связь', dataKey: 'satellites', catKey: 'comms' },
+      { key: 'sat_military', label: 'Военные / Разведка', dataKey: 'satellites', catKey: 'military' },
+      { key: 'sat_navigation', label: 'GPS / Навигация', dataKey: 'satellites', catKey: 'navigation' },
+      { key: 'sat_earth', label: 'Дистанционное зондирование', dataKey: 'satellites', catKey: 'earth_obs' },
+      { key: 'sat_science', label: 'Станции / Телескопы', dataKey: 'satellites', catKey: 'science' },
     ],
   },
   {
-    label: 'SURVEIL',
-    fullLabel: 'SURVEILLANCE',
+    label: 'НАБЛЮД.',
+    fullLabel: 'НАБЛЮДЕНИЕ',
     icon: Camera,
     layers: [
-      { key: 'cctv', label: 'CCTV Cameras', dataKey: 'cameras' },
-      { key: 'cctv_previews', label: 'Live Previews', dataKey: '', parent: 'cctv' },
-      { key: 'live_news', label: 'Live News Feeds', dataKey: 'live_feeds' },
+      { key: 'cctv', label: 'Камеры видеонаблюдения', dataKey: 'cameras' },
+      { key: 'cctv_previews', label: 'Живые превью', dataKey: '', parent: 'cctv' },
+      { key: 'live_news', label: 'Новостные ленты', dataKey: 'live_feeds' },
     ],
   },
   {
-    label: 'HAZARD',
-    fullLabel: 'NATURAL HAZARDS',
+    label: 'УГРОЗЫ',
+    fullLabel: 'ПРИРОДНЫЕ УГРОЗЫ',
     icon: CloudLightning,
     layers: [
-      { key: 'earthquakes', label: 'Earthquakes', dataKey: 'earthquakes' },
-      { key: 'fires', label: 'Active Fires', dataKey: 'fires' },
-      { key: 'weather', label: 'Severe Weather', dataKey: 'weather_events' },
+      { key: 'earthquakes', label: 'Землетрясения', dataKey: 'earthquakes' },
+      { key: 'fires', label: 'Активные пожары', dataKey: 'fires' },
+      { key: 'weather', label: 'Суровая погода', dataKey: 'weather_events' },
     ],
   },
   {
-    label: 'THREAT',
-    fullLabel: 'THREATS & INTEL',
+    label: 'УГРОЗЫ',
+    fullLabel: 'УГРОЗЫ И РАЗВЕДАННЫЕ ДАННЫЕ',
     icon: AlertTriangle,
     layers: [
-      { key: 'infrastructure', label: 'Nuclear Facilities', dataKey: 'infrastructure' },
-      { key: 'global_incidents', label: 'Global Incidents', dataKey: 'gdelt' },
-      { key: 'alert_pins', label: 'Live Alert Pins', dataKey: 'alert_pins' },
-      { key: 'gdelt_events', label: 'GDELT Events', dataKey: 'gdelt_events' },
+      { key: 'infrastructure', label: 'Ядерные объекты', dataKey: 'infrastructure' },
+      { key: 'global_incidents', label: 'Мировые инциденты', dataKey: 'gdelt' },
+      { key: 'alert_pins', label: 'Метки оповещений', dataKey: 'alert_pins' },
+      { key: 'gdelt_events', label: 'События GDELT', dataKey: 'gdelt_events' },
     ],
   },
   {
-    label: 'NETWORK',
-    fullLabel: 'NETWORK INTEL',
+    label: 'СЕТЬ',
+    fullLabel: 'СЕТЕВАЯ РАЗВЕДКА',
     icon: Network,
     layers: [
-      { key: 'malware', label: 'Live Malware', dataKey: 'malware_threats' },
-      { key: 'cyber_attacks', label: 'Botnet C2 Servers', dataKey: 'cyber_attacks' },
+      { key: 'malware', label: 'Вредоносное ПО', dataKey: 'malware_threats' },
+      { key: 'cyber_attacks', label: 'Серверы ботнетов (C2)', dataKey: 'cyber_attacks' },
     ],
   },
   {
-    label: 'NETINTEL',
-    fullLabel: 'NET & EVENT INTEL',
+    label: 'ИНТЕРНЕТ',
+    fullLabel: 'СЕТЬ И СОБЫТИЯ',
     icon: Megaphone,
     layers: [
-      { key: 'cf_outages', label: 'Internet Outages', dataKey: 'cf_outages', requires: 'cloudflare' },
-      { key: 'cf_attacks', label: 'Attack Origins', dataKey: 'cf_attack_origins', requires: 'cloudflare' },
+      { key: 'cf_outages', label: 'Сбои интернета', dataKey: 'cf_outages', requires: 'cloudflare' },
+      { key: 'cf_attacks', label: 'Источники атак', dataKey: 'cf_attack_origins', requires: 'cloudflare' },
     ],
   },
   {
-    label: 'DISPLAY',
-    fullLabel: 'DISPLAY',
+    label: 'ИМПОРТ',
+    fullLabel: 'ИМПОРТ КАРТЫ (ЯНДЕКС/KML/GPX)',
+    icon: MapPinned,
+    layers: [],
+    custom: 'geoimport' as const,
+  },
+  {
+    label: 'ВИД',
+    fullLabel: 'ОТОБРАЖЕНИЕ',
     icon: Sun,
     layers: [
-      { key: 'day_night', label: 'Day / Night Cycle', dataKey: '' },
-      { key: 'terrain_3d', label: '3D Buildings', description: 'City detail · zoom 14.5+', dataKey: '' },
-      { key: 'terrain_elevation', label: '3D Terrain', description: 'Mountains · zoom 10+', dataKey: '' },
+      { key: 'day_night', label: 'Цикл день / ночь', dataKey: '' },
+      { key: 'terrain_3d', label: '3D-здания', description: 'Детализация городов · масштаб 14.5+', dataKey: '' },
+      { key: 'terrain_elevation', label: '3D-рельеф', description: 'Горы · масштаб 10+', dataKey: '' },
     ],
   },
 ];
@@ -224,11 +240,11 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   };
   const terrainDetails = activeLayers.terrain_elevation ? (
     <div className="mt-2 rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-[10px] text-white/60">
-      <p role="status">{terrainStatus === 'idle' ? `Terrain at zoom ${TERRAIN_MIN_ZOOM}+ · zoom in` : terrainStatus === 'waiting' ? 'Terrain starts when you stop moving' : terrainStatus === 'loading' ? 'Loading nearby terrain…' : terrainStatus === 'error' ? 'Terrain unavailable; the map is still usable.' : 'Terrain on'}</p>
-      {terrainStatus === 'idle' && <button type="button" onClick={onTerrainFocus} className="mt-2 min-h-8 rounded border border-white/15 px-2 text-[var(--gold-primary)] hover:bg-white/10">Zoom to terrain</button>}
-      {terrainStatus === 'error' && <button type="button" onClick={onTerrainRetry} className="mt-2 min-h-8 rounded border border-white/15 px-2 text-[var(--gold-primary)] hover:bg-white/10">Retry terrain</button>}
-      <p className="mt-2 text-white/35">Nearby detail only · cached tiles</p>
-      <a className="mt-1 inline-block underline underline-offset-2" href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Terrain credits</a>
+      <p role="status">{terrainStatus === 'idle' ? `Рельеф доступен с масштаба ${TERRAIN_MIN_ZOOM}+ · приблизьте` : terrainStatus === 'waiting' ? 'Рельеф загрузится, когда вы остановите движение карты' : terrainStatus === 'loading' ? 'Загрузка рельефа поблизости…' : terrainStatus === 'error' ? 'Рельеф недоступен; карта по-прежнему работает.' : 'Рельеф включён'}</p>
+      {terrainStatus === 'idle' && <button type="button" onClick={onTerrainFocus} className="mt-2 min-h-8 rounded border border-white/15 px-2 text-[var(--gold-primary)] hover:bg-white/10">Приблизить к рельефу</button>}
+      {terrainStatus === 'error' && <button type="button" onClick={onTerrainRetry} className="mt-2 min-h-8 rounded border border-white/15 px-2 text-[var(--gold-primary)] hover:bg-white/10">Повторить рельеф</button>}
+      <p className="mt-2 text-white/35">Только детали поблизости · кэшированные тайлы</p>
+      <a className="mt-1 inline-block underline underline-offset-2" href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Данные рельефа</a>
     </div>
   ) : null;
 
@@ -244,11 +260,11 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   };
 
   /* Drop layers whose backing capability is not configured, then drop any group
-     left with nothing to show. */
+     left with nothing to show (custom panels always stay). */
   const visibleGroups = LAYER_GROUPS.map(g => ({
     ...g,
     layers: g.layers.filter(l => !l.requires || capabilities[l.requires]),
-  })).filter(g => g.layers.length > 0);
+  })).filter(g => g.layers.length > 0 || g.custom);
 
   const getCount = (dk: string, catKey?: string): number | null => {
     if (!dk) return null;
@@ -309,7 +325,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
 
         {/* MOBILE STYLE STUDIO */}
         <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/[0.06] px-1">
-          <span className="text-[10px] font-mono tracking-[0.2em] text-white/25 uppercase">Style Studio</span>
+          <span className="text-[10px] font-mono tracking-[0.2em] text-white/25 uppercase">Студия стилей</span>
           <button
             onClick={() => setStudioOpen(o => !o)}
             aria-pressed={studioOpen}
@@ -329,7 +345,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
         {/* MOBILE GHOST TOGGLE */}
         {setTheme && (
           <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] px-1">
-            <span className="text-[10px] font-mono tracking-[0.2em] text-white/25 uppercase">Ghost Protocol</span>
+            <span className="text-[10px] font-mono tracking-[0.2em] text-white/25 uppercase">Режим призрака</span>
             <button
               onClick={() => setTheme(theme === 'core' ? 'ghost' : 'core')}
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
@@ -385,7 +401,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
               <button
                 onClick={() => setPinnedGroup(isPinned ? null : group.label)}
                 aria-expanded={isOpen}
-                aria-label={`${group.fullLabel}${activeCount ? ` — ${activeCount} active` : ''}`}
+                aria-label={`${group.fullLabel}${activeCount ? ` — активно: ${activeCount}` : ''}`}
                 title={group.fullLabel}
                 className="relative w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg transition-all duration-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
                 style={{
@@ -451,12 +467,12 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                         onClick={(e) => { e.stopPropagation(); toggleGroup(group.layers); }}
                         className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                       >
-                        {activeCount > 0 ? 'NONE' : 'ALL'}
+                        {activeCount > 0 ? 'НИЧЕГО' : 'ВСЕ'}
                       </button>
                       {isPinned && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setPinnedGroup(null); }}
-                          aria-label="Close"
+                          aria-label="Закрыть"
                           className="px-1.5 py-0.5 rounded text-[10px] font-mono text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                         >
                           ✕
@@ -475,7 +491,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                             onClick={() => toggle(layer.key)}
                             aria-pressed={!!isLayerActive}
                             aria-label={layer.label}
-                            title={dormant ? 'Turn the layer above on to use this' : undefined}
+                            title={dormant ? 'Включите слой выше, чтобы использовать этот' : undefined}
                             className={`relative w-full flex items-center gap-3 py-1.5 rounded-md hover:bg-white/[0.05] transition-colors cursor-pointer text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30 ${layer.parent ? 'pl-[22px] pr-1' : 'px-1'} ${dormant ? 'opacity-40' : ''}`}
                           >
                             {layer.parent && <SubLayerStem />}
@@ -511,7 +527,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
         aria-pressed={studioOpen}
         className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer"
         style={{ background: studioOpen ? 'var(--hover-accent)' : 'transparent' }}
-        title="Style Studio"
+        title="Студия стилей"
       >
         <SlidersHorizontal
           className="transition-all duration-500"
@@ -535,7 +551,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
           style={{
             background: theme === 'ghost' ? 'rgba(179, 136, 255, 0.1)' : 'transparent',
           }}
-          title="Ghost Protocol"
+          title="Режим призрака"
         >
           <Ghost
             className="transition-all duration-500"

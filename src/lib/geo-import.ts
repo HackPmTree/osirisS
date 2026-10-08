@@ -343,7 +343,7 @@ export function fromYandexLink(input: string): any {
     const pts = parseLatLngList(raw);
     if (!pts.length) throw new Error('Похоже на ссылку Яндекс Карт, но разобрать координаты не удалось.');
     return collection(pts.map((c, i) =>
-      feature({ type: pts.length > 1 ? 'LineString' : 'Point', coordinates: pts.length > 1 ? pts : c },
+      feature((pts.length > 1 ? { type: 'LineString', coordinates: pts } : { type: 'Point', coordinates: c }) as GeoJSON.Geometry,
         { name: pts.length > 1 ? `Маршрут (${pts.length} точек)` : `Точка ${i + 1}` })));
   }
 
@@ -421,7 +421,7 @@ export function importFromText(text: string, fileName = ''): GeoImportResult {
       const pts = parseLatLngList(text);
       if (pts.length) {
         geojson = collection(pts.map((c, i) =>
-          feature({ type: pts.length > 1 ? 'LineString' : 'Point', coordinates: pts.length > 1 ? pts : c },
+          feature((pts.length > 1 ? { type: 'LineString', coordinates: pts } : { type: 'Point', coordinates: c }) as GeoJSON.Geometry,
             { name: pts.length > 1 ? `Линия (${pts.length} точек)` : `Точка ${i + 1}` })));
         return finish(geojson, 'Координаты');
       }

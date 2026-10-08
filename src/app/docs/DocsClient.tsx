@@ -20,7 +20,7 @@ const GUIDE_SECTIONS = [
 
 const API_SECTIONS = [
   { id: 'api', title: 'Соглашения' },
-  ...API_GROUPS.map(g => ({ id: `api-${g.id}`, title: g.title })),
+  ...API_GROUPS.map(g => ({ id: `api-${g.id}`, title: ru(g.title) })),
 ];
 
 const ALL_SECTIONS = [...GUIDE_SECTIONS, ...API_SECTIONS];
@@ -157,7 +157,7 @@ export default function DocsClient() {
                 OSIRIS
               </span>
               <span className="text-[9px] font-mono tracking-[0.22em] text-[var(--text-muted)] uppercase mt-[3px]">
-                Docs
+                {ru('Docs')}
               </span>
             </span>
           </Link>
@@ -168,13 +168,13 @@ export default function DocsClient() {
           <button
             onClick={() => setPaletteOpen(true)}
             className="group flex items-center gap-2 px-3 h-8 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-[var(--gold-primary)]/30 hover:bg-white/[0.04] transition-colors"
-            aria-label="Search documentation"
+            aria-label={ru('Search documentation')}
           >
             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--gold-primary)] transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
-            <span className="hidden sm:inline text-[11.5px] text-[var(--text-muted)] font-mono">Search</span>
+            <span className="hidden sm:inline text-[11.5px] text-[var(--text-muted)] font-mono">{ru('Search')}</span>
             <kbd className="hidden sm:inline text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/10 text-[var(--text-muted)]">
               ⌘K
             </kbd>
@@ -184,7 +184,7 @@ export default function DocsClient() {
             href="https://github.com/osiris-osint/osiris"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="GitHub repository"
+            aria-label={ru('GitHub repository')}
             className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg border border-white/[0.08] bg-white/[0.02] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/20 transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
@@ -196,7 +196,7 @@ export default function DocsClient() {
             href="/"
             className="hidden md:inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.15em] uppercase px-3 h-8 rounded-lg border border-[var(--gold-primary)]/30 bg-[var(--gold-primary)]/[0.08] text-[var(--gold-primary)] hover:bg-[var(--gold-primary)]/[0.18] transition-colors"
           >
-            Launch Map
+            {ru('Launch Map')}
             <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
@@ -204,7 +204,7 @@ export default function DocsClient() {
 
           <button
             onClick={() => setNavOpen(v => !v)}
-            aria-label="Toggle navigation"
+            aria-label={ru('Toggle navigation')}
             aria-expanded={navOpen}
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.08] text-[var(--text-muted)] hover:text-[var(--gold-primary)]"
           >
@@ -238,19 +238,18 @@ export default function DocsClient() {
           } fixed lg:sticky top-14 left-0 bottom-0 lg:bottom-auto z-[260] lg:z-auto w-64 lg:w-56 shrink-0 lg:h-[calc(100vh-3.5rem)] overflow-y-auto styled-scrollbar bg-[var(--bg-void)] lg:bg-transparent border-r lg:border-r-0 border-white/[0.06] py-6 pr-2 pl-2 lg:pl-0 transition-all duration-200`}
         >
           <div className="text-[10px] font-mono tracking-[0.3em] uppercase text-[var(--text-muted)]/70 pl-4 mb-2">
-            Guide
+            {ru('Guide')}
           </div>
           {GUIDE_SECTIONS.map(navLink)}
 
           <div className="text-[10px] font-mono tracking-[0.3em] uppercase text-[var(--text-muted)]/70 pl-4 mb-2 mt-7">
-            API Reference
+            {ru('API Reference')}
           </div>
           {API_SECTIONS.map(navLink)}
 
           <div className="mt-8 mx-2 rounded-lg border border-white/[0.07] bg-white/[0.02] p-3">
             <div className="text-[11px] font-mono text-[var(--text-secondary)] leading-relaxed">
-              <span className="text-[var(--gold-primary)] font-bold">{ENDPOINT_COUNT}</span> endpoints, no key
-              required.
+              <span className="text-[var(--gold-primary)] font-bold">{ENDPOINT_COUNT}</span>{' '}{ru('endpoints, no key required.')}
             </div>
           </div>
         </nav>
@@ -262,22 +261,20 @@ export default function DocsClient() {
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-[var(--cyan-primary)]/20 bg-[var(--cyan-primary)]/[0.05] mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--alert-green)] animate-pulse" />
               <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[var(--text-secondary)]">
-                Open Source · MIT
+                {ru('Open Source · MIT')}
               </span>
             </div>
 
             <h1 className="text-[38px] md:text-[52px] leading-[1.05] font-bold tracking-[-0.02em] mb-5">
-              <span className="text-[var(--text-heading)]">Build on the</span>
+              <span className="text-[var(--text-heading)]">{ru('Build on the')}</span>
               <br />
               <span className="bg-gradient-to-r from-[var(--gold-primary)] via-[#F0D060] to-[var(--cyan-primary)] bg-clip-text text-transparent">
-                OSIRIS platform
+                {ru('OSIRIS platform')}
               </span>
             </h1>
 
             <p className="text-[15px] leading-[1.75] text-[var(--text-secondary)] max-w-[42rem]">
-              OSIRIS aggregates aviation, maritime, seismic, conflict, cyber, and OSINT feeds onto a single
-              GPU-rendered map — and exposes every one of them as a plain HTTP endpoint. This is the same API the
-              dashboard runs on. There is no separate, privileged internal tier.
+              OSIRIS агрегирует авиационные, морские, сейсмические, конфликтные, кибер- и OSINT-ленты на единой карте с GPU-отрисовкой — и публикует каждую из них как обычный HTTP-эндпоинт. Это тот же API, на котором работает панель управления. Никакого отдельного привилегированного внутреннего слоя нет.
             </p>
 
             <div className="flex flex-wrap gap-3 mt-8">
@@ -285,7 +282,7 @@ export default function DocsClient() {
                 href="#quickstart"
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg text-[11px] font-mono tracking-wider uppercase border border-[var(--gold-primary)]/40 bg-[var(--gold-primary)]/10 text-[var(--gold-primary)] hover:bg-[var(--gold-primary)]/20 transition-colors"
               >
-                Quick Start
+                {ru('Quick Start')}
                 <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
@@ -294,15 +291,15 @@ export default function DocsClient() {
                 href="#api"
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg text-[11px] font-mono tracking-wider uppercase border border-white/[0.1] bg-white/[0.02] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-white/20 transition-colors"
               >
-                API Reference
+                {ru('API Reference')}
               </a>
             </div>
 
             <div className="grid grid-cols-3 gap-3 mt-10">
               {[
-                { n: String(ENDPOINT_COUNT), l: 'Endpoints' },
-                { n: '20+', l: 'Live feeds' },
-                { n: '0', l: 'Keys required' },
+                { n: String(ENDPOINT_COUNT), l: ru('Endpoints') },
+                { n: '20+', l: ru('Live feeds') },
+                { n: '0', l: ru('Keys required') },
               ].map(s => (
                 <div key={s.l} className="rounded-xl border border-white/[0.07] bg-white/[0.015] px-4 py-3">
                   <div className="text-[24px] font-bold text-[var(--gold-primary)] font-mono leading-none">{s.n}</div>
@@ -315,27 +312,26 @@ export default function DocsClient() {
           </div>
 
           {/* ── GUIDE ── */}
-          <Section id="overview" eyebrow="Guide" title="Overview">
+          <Section id="overview" eyebrow={ru("Guide")} title={ru("Overview")}>
             <p>
-              Every data point on the map is rendered through WebGL via MapLibre GL, which is what lets the interface
-              hold thousands of concurrent entities at 60fps. The application is a Next.js app: the map and HUD run in
-              the browser, and each live feed is normalised by a route under <Code>/api</Code> before it reaches the
-              client.
+              Каждая точка данных на карте отрисовывается через WebGL при помощи MapLibre GL — именно поэтому интерфейс
+              удерживает тысячи объектов одновременно при 60 fps. Приложение построено на Next.js: карта и HUD работают
+              в браузере, а каждая живая лента нормализуется маршрутом под <Code>/api</Code> до попадания на клиент.
             </p>
             <p>
-              That boundary is deliberate. Upstream sources disagree about formats, rate limits, and CORS policy, so
-              the API layer absorbs those differences and hands back consistent JSON.
+              Эта граница сознательна: вышестоящие источники расходятся в форматах, лимитах запросов и политике CORS,
+              поэтому слой API сглаживает эти различия и возвращает согласованный JSON.
             </p>
-            <Callout tone="good" title="No credentials needed">
-              Aviation, maritime, satellites, fires, earthquakes, weather, news, and CVE data all come from public
-              keyless feeds. Keys only matter for the optional RECON scanner and for raising rate limits.
+            <Callout tone="good" title={ru("No credentials needed")}>
+              Авиация, морской трафик, спутники, пожары, землетрясения, погода, новости и данные CVE поступают из
+              общедоступных лент без ключей. Ключи нужны только для необязательного RECON-сканера и для повышения лимитов запросов.
             </Callout>
           </Section>
 
-          <Section id="quickstart" eyebrow="Guide" title="Quick Start">
+          <Section id="quickstart" eyebrow={ru("Guide")} title={ru("Quick Start")}>
             <p>
-              Every read endpoint is a plain <Code>GET</Code> returning JSON. Nothing below needs authentication —
-              paste any of it into a terminal.
+              Каждый эндпоинт чтения — это обычный <Code>GET</Code>, возвращающий JSON. Ниже ничего не требует авторизации —
+              просто вставьте любую команду в терминал.
             </p>
             <CodeBlock
               label="Fetch live aircraft"
@@ -359,48 +355,47 @@ print(len(data["commercial_flights"]), "commercial")`,
               ]}
             />
             <p>
-              If you only need magnitudes rather than geometry, <Code>/api/stats</Code> is the right endpoint to poll —
-              it collapses the heavy feeds into a handful of counters.
+              Если нужны только количества, а не геометрия, опрашивайте <Code>/api/stats</Code> —
+              он сводит тяжёлые ленты к нескольким счётчикам.
             </p>
             <Pre label="Aggregate counters" lang="bash">{`curl -s ${origin}/api/stats
 # { "stats": { "flights": 9241, "sats": 2043, "cctv": 2117,
 #              "weather": 58, "nuclear": 191, "incidents": 412 },
 #   "timestamp": "2026-07-29T12:00:00Z" }`}</Pre>
-            <p>The OSINT lookups each take one subject, so they compose cleanly in a pipeline:</p>
+            <p>Каждый OSINT-запрос принимает один объект, поэтому их удобно комбинировать в конвейер:</p>
             <Pre label="Passive subdomain enumeration" lang="bash">{`curl -s "${origin}/api/osint/certs?domain=example.com" | jq -r '.subdomains[]'`}</Pre>
-            <Callout tone="info" title="Try before you write code">
-              Every GET endpoint in the reference below has a <strong>Send request</strong> button that runs it against
-              this instance and shows the live response.
+            <Callout tone="info" title={ru("Try before you write code")}>
+              У каждого GET-эндпоинта в справочнике ниже есть кнопка <strong>{ru('Send request')}</strong>, которая выполняет его
+              на этом экземпляре и показывает живой ответ.
             </Callout>
           </Section>
 
-          <Section id="self-hosting" eyebrow="Guide" title="Self-Hosting">
-            <p>OSIRIS needs Node 20+ and no database. A local instance is three commands:</p>
+          <Section id="self-hosting" eyebrow={ru("Guide")} title={ru("Self-Hosting")}>
+            <p>OSIRIS требует Node 20+ и не требует базы данных. Локальный экземпляр запускается тремя командами:</p>
             <Pre label="Local development" lang="bash">{`git clone https://github.com/osiris-osint/osiris.git
 cd osiris
 npm install
 npm run dev        # http://localhost:3000`}</Pre>
-            <p>For a production build, or to run the checks:</p>
+            <p>Для продакшен-сборки или проверки кода:</p>
             <Pre label="Build and test" lang="bash">{`npm run build && npm start
 npm run lint
 npm test           # vitest
 npm run test:live  # includes tests that hit live upstream feeds`}</Pre>
             <p>
-              A <Code>Dockerfile</Code> and <Code>docker-compose.yml</Code> ship with the repository. The container
-              always listens on port 3000 internally; <Code>OSIRIS_PORT</Code> controls the host port it is published
-              on.
+              В репозитории есть <Code>Dockerfile</Code> и <Code>docker-compose.yml</Code>. Контейнер всегда
+              слушает внутри порт 3000; <Code>OSIRIS_PORT</Code> задаёт публикуемый порт хоста.
             </p>
             <Pre label="Docker" lang="bash">{`cp .env.example .env
 docker compose up -d`}</Pre>
           </Section>
 
-          <Section id="configuration" eyebrow="Guide" title="Configuration">
+          <Section id="configuration" eyebrow={ru("Guide")} title={ru("Configuration")}>
             <p>
-              Copy <Code>.env.example</Code> to <Code>.env</Code>. Read that file before filling anything in — most of
-              the keys it lists are reserved for future sources and are not consumed by the current code.
+              Скопируйте <Code>.env.example</Code> в <Code>.env</Code>. Прочитайте этот файл, прежде что-либо заполнять:
+              большинство перечисленных в нём ключей зарезервированы для будущих источников и текущим кодом не используются.
             </p>
             <h3 className="text-[12px] font-mono tracking-[0.15em] uppercase text-[var(--text-primary)] pt-2">
-              Read by the application
+              {ru('Read by the application')}
             </h3>
             <div className="space-y-2">
               {[
@@ -431,49 +426,49 @@ docker compose up -d`}</Pre>
               ))}
             </div>
             <h3 className="text-[12px] font-mono tracking-[0.15em] uppercase text-[var(--text-primary)] pt-4">
-              Optional — higher rate limits only
+              {ru('Optional — higher rate limits only')}
             </h3>
             <p>
               <Code>FIRMS_API_KEY</Code>, <Code>OPENSKY_CLIENT_ID</Code>, <Code>OPENSKY_CLIENT_SECRET</Code>,{' '}
-              <Code>N2YO_API_KEY</Code>, <Code>AIS_API_KEY</Code>. The public keyless feeds are used unless you extend
-              the code to prefer these.
+              <Code>N2YO_API_KEY</Code>, <Code>AIS_API_KEY</Code>. Используются публичные ленты без ключей, если только вы не расширите
+              код, чтобы отдавать предпочтение этим.
             </p>
-            <Callout tone="warn" title="Secrets hygiene">
-              Generate secrets with <Code>openssl rand -hex 32</Code>. Never commit a populated <Code>.env</Code> —
-              only <Code>.env.example</Code> belongs in version control.
+            <Callout tone="warn" title={ru("Secrets hygiene")}>
+              Генерируйте секреты командой <Code>openssl rand -hex 32</Code>. Никогда не коммитьте заполненный <Code>.env</Code> —
+              в системе контроля версий должен быть только <Code>.env.example</Code>.
             </Callout>
           </Section>
 
-          <Section id="interface" eyebrow="Guide" title="Interface Guide">
+          <Section id="interface" eyebrow={ru("Guide")} title={ru("Interface Guide")}>
             <p>
-              The map fills the viewport and every control floats above it. Panels are toggles rather than
-              destinations, so you can build up exactly the picture you need and drop the rest.
+              Карта занимает весь экран, а все элементы управления плавают поверх неё. Панели — это переключатели, а не
+              отдельные страницы: собирайте нужную картину и убирайте лишнее.
             </p>
             <div className="grid sm:grid-cols-2 gap-2.5">
               {[
                 {
-                  k: 'Layer Panel',
-                  v: 'The left rail. Switches individual feeds on and off, and carries the theme selector.',
+                  k: ru('Layer Panel'),
+                  v: "The left rail. Switches individual feeds on and off, and carries the theme selector.",
                 },
                 {
-                  k: 'RECON Toolkit',
-                  v: 'DNS, WHOIS, certificate transparency, IP and ASN enrichment, breach checks, sanctions, CVE lookup, port scanning.',
+                  k: ru('RECON Toolkit'),
+                  v: "DNS, WHOIS, certificate transparency, IP and ASN enrichment, breach checks, sanctions, CVE lookup, port scanning.",
                 },
                 {
-                  k: 'Intel Feed',
-                  v: 'A running stream of incoming events across every enabled feed.',
+                  k: ru('Intel Feed'),
+                  v: "A running stream of incoming events across every enabled feed.",
                 },
                 {
-                  k: 'Region Dossier',
-                  v: 'Double right-click the map for a composite summary of that location from every feed covering it.',
+                  k: ru('Region Dossier'),
+                  v: "Double right-click the map for a composite summary of that location from every feed covering it.",
                 },
                 {
-                  k: 'Entity Graph',
-                  v: 'Link analysis, expanding one node at a time into its neighbours.',
+                  k: ru('Entity Graph'),
+                  v: "Link analysis, expanding one node at a time into its neighbours.",
                 },
                 {
-                  k: 'Status Bar',
-                  v: 'Community and docs links on the left, then a live ticker of prices and significant seismic events.',
+                  k: ru('Status Bar'),
+                  v: "Community and docs links on the left, then a live ticker of prices and significant seismic events.",
                 },
               ].map(row => (
                 <div
@@ -487,45 +482,45 @@ docker compose up -d`}</Pre>
             </div>
           </Section>
 
-          <Section id="oi" eyebrow="Guide" title="OI & MCP">
+          <Section id="oi" eyebrow={ru("Guide")} title={ru("OI & MCP")}>
             <p>
-              OI is the AI in OSIRIS, on your own model key, and it works two ways. <strong>Assist</strong> is a
-              conversation (press <kbd>O</kbd>): ask in words, typed or spoken, and OI works the map for you. It flies
-              to the place you name, switches the layers on, searches what is live (flights, military aircraft, ships,
-              ports and chokepoints, earthquakes, fires, weather, disaster alerts, news, cameras, satellites), marks
-              what it finds in cyan with the area it searched, and lists it in cards you can click through. It reads the
-              markets, opens panels, and starts forecasts. Each step shows what it did as it does it; choose Navigate,
-              Research or Forecast to steer it, or leave it on Auto.
+              OI — это ИИ в OSIRIS, работающий на вашем собственном ключе модели, и работает он двумя способами. <strong>Assist</strong> — это
+              диалог (нажмите <kbd>O</kbd>): сформулируйте запрос словами, текстом или голосом, и OI поработает с картой за вас. Он перелетит
+              к названному месту, включит слои, найдёт то, что происходит прямо сейчас (самолёты, военная авиация, корабли,
+              порты и проливы, землетрясения, пожары, погода, предупреждения о бедствиях, новости, камеры, спутники), отметит
+              найденное бирюзовым с областью поиска и выведет список кликабельных карточек. Он читает рыночные данные,
+              открывает панели и запускает прогнозы. Каждый шаг показывает выполненное действие; выберите Navigate,
+              Research или Forecast, чтобы направить его, или оставьте режим Auto.
             </p>
             <p>
-              <strong>Forecast</strong> is OSIRIS&apos;s prediction engine. Ask it a question and it researches it, builds a
-              world model (the actors, where they are, how they relate), and casts the actors who decide the outcome as
-              agents, each with what it wants, the levers it can pull and its red lines. Then it plays them against each
-              other over simulated time, in dated periods from today to the question&apos;s horizon, in several parallel
-              worlds: each period every actor decides its move from what has happened in its world so far, and a world
-              engine turns the moves into dated events, the occasional surprise, and where the question now stands. A
-              report agent then writes the prediction: how it most likely unfolds, date by date, what each actor does, how
-              each world ended, and a calibrated figure with its drivers, scenarios, signposts and dissent. The figure
-              takes the shape the question asks for: a probability for a yes-or-no question, a share for each outcome
-              when it asks which of several will happen, and an estimate with an 80% range when it asks how much. While
-              it runs, it draws itself on the globe as arcs through the sky; every arc and point can be clicked to open
-              exactly that piece of the research, and the camera follows the run until you take it.
+              <strong>Forecast</strong> — движок предсказаний OSIRIS. Задайте вопрос — и он исследует его, построит
+              модель мира (участники, где они находятся, как связаны) и превратит участников, влияющих на исход, в
+              агентов, у каждого из которых есть свои цели, рычаги влияния и красные линии. Затем они играют друг против друга
+              в симулированном времени, в датированных периодах от сегодняшнего дня до горизонта вопроса, в нескольких параллельных
+              мирах: в каждом периоде каждый участник выбирает ход исходя из того, что уже произошло в его мире, а движок мира
+              превращает ходы в датированные события, редкие сюрпризы и текущий статус вопроса. После этого агент-репортёр
+              пишет прогноз: как всё наиболее вероятно развернётся, день за днём, что делает каждый участник, чем закончился
+              каждый мир и откалиброванная оценка с факторами, сценариями, ориентирами и несогласием. Оценка принимает форму, которую
+              требует вопрос: вероятность для вопроса «да или нет», доля для каждого исхода, когда спрашивают, какой из нескольких
+              наступит, и оценка с 80%-ным интервалом, когда спрашивают «сколько». Во время работы он визуализирует себя на глобусе
+              дугами в небе; каждую дугу и точку можно открыть, чтобы увидеть именно ту часть исследования, а камера следует за запуском,
+              пока вы не возьмёте управление.
             </p>
             <div className="grid sm:grid-cols-2 gap-2.5">
               {[
-                { k: 'Your own key', v: 'OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, DeepSeek, xAI, Mistral or Qwen. The key stays in your browser and travels in a header with your requests; the server uses it for your run and never stores or logs it.' },
-                { k: 'Cost', v: 'Quick: 4 actors × 3 periods × 2 worlds, about 34 model calls. Standard: 6 × 4 × 3, about 88. Deep: 7 × 4 × 4, about 132. A world that settles early stops spending. Billed by your provider at its own rates.' },
-                { k: 'Sharing', v: 'Every run has a link, /?oi=<id>, that replays the whole analysis on the globe for anyone who opens it. Runs are kept for three hours after they finish.' },
-                { k: 'Steering', v: 'Whoever started a run holds its token: they alone can inject events into it or stop it. Anyone with a key can question the actors and the report agent.' },
-                { k: 'On the globe', v: 'Violet arcs are alignments and cooperation, magenta are rivalries and pressure, indigo is everything in between; evidence from the feeds is a paler wash of its tone, and each move is an arc from the actor that made it to the actor it was aimed at. All three colours are yours to set in the Style Studio (Map layers → OI).' },
-                { k: 'Workspace', v: 'Full screen (the expand button, with or without a forecast) opens the OI workspace. On the left, the same Forecast / Assist switch as the panel: the ask form, then the prediction with the report or the execution trace (every step the engine took, timed, with what it produced); or the conversation. In the middle, four views on keys 1 to 4: the live globe; the research graph, after MiroFish, with every actor and cited source and every relation, move and quote between them, filters and a flow layout; the timeline, each simulated world period by period with its events, under the worlds pooled; and sortable tables of actors, moves, events, sources and links. On the right, once there is a run, whatever is selected, as an object with its properties and links. Ctrl+K (⌘K) finds any object by name, and in Assist OI can open the workspace, switch its view and open objects for you.' },
-                { k: 'Research', v: 'Before the world model, OI researches the question from sources that can be checked: the reporting (a newsroom of publishers’ own feeds by desk, Yahoo Finance’s newswire for any ticker in play, GDELT and Wikipedia’s Current events, each story with its link and, where the publisher serves it, what the article says; social networks are left out), two years of daily prices for any market price the question turns on, what Polymarket and Manifold price the same question at, Wikipedia background, and the OSIRIS feeds where they are on topic. The actors are the real ones the question turns on (governments, leaders, companies, groups), each played from its own interests; a market is the world they move, never a player.' },
-                { k: 'Prices', v: 'A question about a price (a coin, a share, an index, a commodity, a currency) is priced. The instrument’s own daily moves, average trend removed, are resampled into 4,000 paths to the horizon: the statistical baseline. Each simulated world gets its own course for the price, spread across what can happen; the period’s events push it; and the price settles the question in that world. The worlds’ events are then run through the market’s own paths, so three worlds read as a probability, not a tally of three outcomes.' },
-                { k: 'What it rests on', v: 'Every prediction is shown beside what can be checked, on one scale: the statistical baseline, the prediction market on the same question (real money, many traders), the simulation priced, how the worlds ended, and the prediction itself, each a click from its source. The report agent is told to move off a liquid market or the baseline only for reasons it can name.' },
-                { k: 'Every level', v: 'When a prediction market prices the question as a ladder (reach $160, $180, $200…, dip to $90, $60… by the same date), OI reads the whole ladder and sets it beside its own curve, the chance of trading at every level, rung by rung: where the model sees more upside or downside than the crowd, and where they part most.' },
-                { k: 'Its record', v: 'The statistical baseline is scored on the instrument’s own past: on days through five years of prices it forecasts, from the year before each day only, whether the price would trade at levels above and below within the question’s span, against what then happened. A calibration chart shows what it said against how often it happened, with its calibration gap and its Brier score beside hindsight.' },
-                { k: 'Sources', v: 'The actors back their moves with quotes from numbered sources: the research’s articles and background, items of the live feed, or passages the world model lifts word for word from your own data. Each quote says which way it pushed the actor and why, and links to where it was published; the report shows the evidence that moved the actors, source by source. Each quote is checked against its source and marked verbatim or paraphrase; an actor’s first move that quotes nothing is sent back once. In the research graph every quote is a dotted thread from the actor to its source, and the report joins at the end with a thread to each source its drivers rest on, so any conclusion can be followed back to the words it came from.' },
-                { k: 'Answers', v: 'Every run says what kind it is (binary, choice or number) and gives its answer in words, e.g. "62% YES", "Hold (55%)" or "86.4 USD per barrel (80–92)", alongside the figures.' },
+                { k: ru('Your own key'), v: "OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, DeepSeek, xAI, Mistral or Qwen. The key stays in your browser and travels in a header with your requests; the server uses it for your run and never stores or logs it." },
+                { k: ru('Cost'), v: "Quick: 4 actors \u00d7 3 periods \u00d7 2 worlds, about 34 model calls. Standard: 6 \u00d7 4 \u00d7 3, about 88. Deep: 7 \u00d7 4 \u00d7 4, about 132. A world that settles early stops spending. Billed by your provider at its own rates." },
+                { k: ru('Sharing'), v: "Every run has a link, /?oi=<id>, that replays the whole analysis on the globe for anyone who opens it. Runs are kept for three hours after they finish." },
+                { k: ru('Steering'), v: "Whoever started a run holds its token: they alone can inject events into it or stop it. Anyone with a key can question the actors and the report agent." },
+                { k: ru('On the globe'), v: "Violet arcs are alignments and cooperation, magenta are rivalries and pressure, indigo is everything in between; evidence from the feeds is a paler wash of its tone, and each move is an arc from the actor that made it to the actor it was aimed at. All three colours are yours to set in the Style Studio (Map layers \u2192 OI)." },
+                { k: ru('Workspace'), v: "Full screen (the expand button, with or without a forecast) opens the OI workspace. On the left, the same Forecast / Assist switch as the panel: the ask form, then the prediction with the report or the execution trace (every step the engine took, timed, with what it produced); or the conversation. In the middle, four views on keys 1 to 4: the live globe; the research graph, after MiroFish, with every actor and cited source and every relation, move and quote between them, filters and a flow layout; the timeline, each simulated world period by period with its events, under the worlds pooled; and sortable tables of actors, moves, events, sources and links. On the right, once there is a run, whatever is selected, as an object with its properties and links. Ctrl+K (\u2318K) finds any object by name, and in Assist OI can open the workspace, switch its view and open objects for you." },
+                { k: ru('Research'), v: "Before the world model, OI researches the question from sources that can be checked: the reporting (a newsroom of publishers\u2019 own feeds by desk, Yahoo Finance\u2019s newswire for any ticker in play, GDELT and Wikipedia\u2019s Current events, each story with its link and, where the publisher serves it, what the article says; social networks are left out), two years of daily prices for any market price the question turns on, what Polymarket and Manifold price the same question at, Wikipedia background, and the OSIRIS feeds where they are on topic. The actors are the real ones the question turns on (governments, leaders, companies, groups), each played from its own interests; a market is the world they move, never a player." },
+                { k: ru('Prices'), v: "A question about a price (a coin, a share, an index, a commodity, a currency) is priced. The instrument\u2019s own daily moves, average trend removed, are resampled into 4,000 paths to the horizon: the statistical baseline. Each simulated world gets its own course for the price, spread across what can happen; the period\u2019s events push it; and the price settles the question in that world. The worlds\u2019 events are then run through the market\u2019s own paths, so three worlds read as a probability, not a tally of three outcomes." },
+                { k: ru('What it rests on'), v: "Every prediction is shown beside what can be checked, on one scale: the statistical baseline, the prediction market on the same question (real money, many traders), the simulation priced, how the worlds ended, and the prediction itself, each a click from its source. The report agent is told to move off a liquid market or the baseline only for reasons it can name." },
+                { k: ru('Every level'), v: "When a prediction market prices the question as a ladder (reach $160, $180, $200\u2026, dip to $90, $60\u2026 by the same date), OI reads the whole ladder and sets it beside its own curve, the chance of trading at every level, rung by rung: where the model sees more upside or downside than the crowd, and where they part most." },
+                { k: ru('Its record'), v: "The statistical baseline is scored on the instrument\u2019s own past: on days through five years of prices it forecasts, from the year before each day only, whether the price would trade at levels above and below within the question\u2019s span, against what then happened. A calibration chart shows what it said against how often it happened, with its calibration gap and its Brier score beside hindsight." },
+                { k: ru('Sources'), v: "The actors back their moves with quotes from numbered sources: the research\u2019s articles and background, items of the live feed, or passages the world model lifts word for word from your own data. Each quote says which way it pushed the actor and why, and links to where it was published; the report shows the evidence that moved the actors, source by source. Each quote is checked against its source and marked verbatim or paraphrase; an actor\u2019s first move that quotes nothing is sent back once. In the research graph every quote is a dotted thread from the actor to its source, and the report joins at the end with a thread to each source its drivers rest on, so any conclusion can be followed back to the words it came from." },
+                { k: ru('Answers'), v: "Every run says what kind it is (binary, choice or number) and gives its answer in words, e.g. \"62% YES\", \"Hold (55%)\" or \"86.4 USD per barrel (80\u201392)\", alongside the figures." },
               ].map(row => (
                 <div key={row.k} className="rounded-xl border border-white/[0.07] bg-white/[0.015] p-3.5">
                   <div className="font-mono text-[11.5px] text-[#B388FF] mb-1.5">{row.k}</div>
@@ -534,7 +529,7 @@ docker compose up -d`}</Pre>
               ))}
             </div>
 
-            <p className="pt-2">From code, start a run, then follow it over Server-Sent Events or wait for it:</p>
+            <p className="pt-2">Из кода: запустите прогноз, затем следите за ним через Server-Sent Events или дождитесь результата:</p>
             <CodeBlock
               label="Predict over the REST API"
               tabs={[
@@ -558,11 +553,11 @@ curl -N ${origin}/api/oi/runs/RUN_ID/events`,
             />
 
             <p>
-              The same engine is an MCP server at <Code>{`${origin}/api/mcp`}</Code> (Streamable HTTP). Give an agent the
-              tools <Code>oi_predict</Code>, <Code>oi_get_run</Code>, <Code>oi_ask</Code>,{' '}
-              <Code>oi_inject</Code> and <Code>oi_cancel</Code>, plus <Code>osiris_world_brief</Code> and{' '}
-              <Code>osiris_markets</Code> and <Code>osiris_trending</Code>, which are free and need no key. The model key is set once on the connection, as
-              headers, so it never appears in the agent&apos;s conversation.
+              Тот же движок доступен как MCP-сервер по адресу <Code>{`${origin}/api/mcp`}</Code> (Streamable HTTP). Передайте агенту инструменты{' '}
+              <Code>oi_predict</Code>, <Code>oi_get_run</Code>, <Code>oi_ask</Code>,{' '}
+              <Code>oi_inject</Code> и <Code>oi_cancel</Code>, а также <Code>osiris_world_brief</Code>,{' '}
+              <Code>osiris_markets</Code> и <Code>osiris_trending</Code> — они бесплатны и не требуют ключа. Ключ модели задаётся один раз при подключении
+              через заголовки и никогда не попадает в диалог агента.
             </p>
             <CodeBlock
               label="Connect an agent"
@@ -604,35 +599,35 @@ mcp_servers:
                 },
               ]}
             />
-            <Callout tone="info" title="How long a prediction takes">
-              A few minutes, depending on depth and provider. <Code>oi_predict</Code> waits for it when the
-              client accepts a streamed response, sending progress as each phase and period completes. Over plain JSON it
-              waits about 80 seconds, then returns the run id to poll with <Code>oi_get_run</Code> and{' '}
+            <Callout tone="info" title={ru("How long a prediction takes")}>
+              Несколько минут — в зависимости от глубины и провайдера. <Code>oi_predict</Code> ждёт завершения, если
+              клиент принимает потоковый ответ, отправляя прогресс по мере выполнения каждой фазы и периода. В обычном JSON-режиме он
+              ждёт около 80 секунд, затем возвращает id запуска для опроса через <Code>oi_get_run</Code> и{' '}
               <Code>wait_seconds</Code>.
             </Callout>
             <p className="text-[12px] text-[var(--text-muted)]">
-              The method follows{' '}
+              Методология следует{' '}
               <a href="https://github.com/666ghj/MiroFish" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">MiroFish</a>,
-              the open-source swarm-intelligence engine: seed a parallel world from real material, populate it with agents,
-              let them interact while you inject variables, then hand the simulation to a report agent. OSIRIS rebuilds that
-              method natively for its own feeds and globe; no MiroFish code is used. A simulation, not a guarantee.
+              движку роевого интеллекта с открытым кодом: засеять параллельный мир из реальных материалов, населить его агентами,
+              дать им взаимодействовать при внедрении переменных, затем передать симуляцию агенту-репортёру. OSIRIS воспроизводит эту
+              методологию нативно для своих лент и глобуса; код MiroFish не используется. Это симуляция, а не гарантия.
             </p>
           </Section>
 
-          <Section id="shortcuts" eyebrow="Guide" title="Keyboard Shortcuts">
+          <Section id="shortcuts" eyebrow={ru("Guide")} title={ru("Keyboard Shortcuts")}>
             <p>
-              Press <Code>?</Code> at any time inside the application to bring up this list.
+              Нажмите <Code>?</Code> в любой момент в приложении, чтобы открыть этот список.
             </p>
             <div className="grid sm:grid-cols-2 gap-2">
               {[
-                { key: 'F', desc: 'Toggle fullscreen' },
-                { key: 'S', desc: 'Share current view' },
-                { key: 'L', desc: 'Toggle layer panel' },
-                { key: 'M', desc: 'Toggle markets panel' },
-                { key: 'I', desc: 'Toggle intel feed' },
-                { key: 'R', desc: 'Reset to global view' },
-                { key: '?', desc: 'Show help' },
-                { key: 'ESC', desc: 'Close panels / popups' },
+                { key: 'F', desc: "\u041f\u043e\u043b\u043d\u043e\u044d\u043a\u0440\u0430\u043d\u043d\u044b\u0439 \u0440\u0435\u0436\u0438\u043c" },
+                { key: 'S', desc: "\u041f\u043e\u0434\u0435\u043b\u0438\u0442\u044c\u0441\u044f \u0442\u0435\u043a\u0443\u0449\u0438\u043c \u0432\u0438\u0434\u043e\u043c" },
+                { key: 'L', desc: "\u041f\u0430\u043d\u0435\u043b\u044c \u0441\u043b\u043e\u0451\u0432" },
+                { key: 'M', desc: "\u041f\u0430\u043d\u0435\u043b\u044c \u0440\u044b\u043d\u043a\u043e\u0432" },
+                { key: 'I', desc: "\u041b\u0435\u043d\u0442\u0430 \u0440\u0430\u0437\u0432\u0435\u0434\u0434\u0430\u043d\u043d\u044b\u0445" },
+                { key: 'R', desc: "\u0421\u0431\u0440\u043e\u0441 \u043a \u043c\u0438\u0440\u043e\u0432\u043e\u043c\u0443 \u043e\u0431\u0437\u043e\u0440\u0443" },
+                { key: '?', desc: "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043f\u043e\u043c\u043e\u0449\u044c" },
+                { key: 'ESC', desc: "\u0417\u0430\u043a\u0440\u044b\u0442\u044c \u043f\u0430\u043d\u0435\u043b\u0438 / \u043f\u043e\u043f\u0430\u043f\u044b" },
               ].map(s => (
                 <div
                   key={s.key}
@@ -646,33 +641,33 @@ mcp_servers:
               ))}
             </div>
             <p className="pt-2">
-              In these docs, <Code>⌘K</Code> (or <Code>/</Code>) opens search from anywhere on the page.
+              В этой документации <Code>⌘K</Code> (или <Code>/</Code>) открывает поиск в любом месте страницы.
             </p>
           </Section>
 
           {/* ── API REFERENCE ── */}
-          <Section id="api" eyebrow="API Reference" title="Conventions">
+          <Section id="api" eyebrow={ru("API Reference")} title={ru("Conventions")}>
             <p>
-              All routes live under <Code>/api</Code> on whatever origin serves the application. Reads are{' '}
-              <Code>GET</Code>, writes are <Code>POST</Code> with a JSON body. Nothing requires authentication except{' '}
-              <Code>/api/sdk/ingest</Code> and <Code>/api/github-webhook</Code>. OI runs on a model key you bring,
-              sent in the <Code>X-OI-Key</Code> header.
+              Все маршруты находятся под <Code>/api</Code> на том же адресе, что и приложение. Чтение — <Code>GET</Code>,
+              запись — <Code>POST</Code> с JSON-телом. Ничего не требует авторизации, кроме{' '}
+              <Code>/api/sdk/ingest</Code> и <Code>/api/github-webhook</Code>. OI работает на вашем собственном ключе модели,
+              который передаётся в заголовке <Code>X-OI-Key</Code>.
             </p>
             <div className="space-y-2.5">
               {[
                 {
-                  k: 'Errors',
-                  v: 'Failures return a non-2xx status with an `error` key, often alongside `detail` carrying the upstream message. Most routes proxy third parties, so treat upstream failure as normal — check response.ok before reading the body.',
+                  k: ru('Errors'),
+                  v: "\u041e\u0448\u0438\u0431\u043a\u0438 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u044e\u0442 \u0441\u0442\u0430\u0442\u0443\u0441 \u0432\u043d\u0435 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430 2xx \u0441 \u043a\u043b\u044e\u0447\u043e\u043c `error`, \u0447\u0430\u0441\u0442\u043e \u0432\u043c\u0435\u0441\u0442\u0435 \u0441 `detail`, \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u0449\u0438\u043c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u0432\u044b\u0448\u0435\u0441\u0442\u043e\u044f\u0449\u0435\u0433\u043e \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0430. \u0411\u043e\u043b\u044c\u0448\u0438\u043d\u0441\u0442\u0432\u043e \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u043e\u0432 \u043f\u0440\u043e\u043a\u0441\u0438\u0440\u0443\u044e\u0442 \u0441\u0442\u043e\u0440\u043e\u043d\u043d\u0438\u0435 \u0441\u0435\u0440\u0432\u0438\u0441\u044b, \u043f\u043e\u044d\u0442\u043e\u043c\u0443 \u0441\u0447\u0438\u0442\u0430\u0439\u0442\u0435 \u0441\u0431\u043e\u0438 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u043e\u0432 \u043d\u043e\u0440\u043c\u043e\u0439 \u2014 \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0439\u0442\u0435 response.ok \u043f\u0435\u0440\u0435\u0434 \u0447\u0442\u0435\u043d\u0438\u0435\u043c \u0442\u0435\u043b\u0430 \u043e\u0442\u0432\u0435\u0442\u0430.",
                 },
                 {
-                  k: 'Caching',
-                  v: 'Routes set their own Cache-Control TTLs: typically 45–60s for fast-moving feeds, up to a day for static reference data. Polling faster than the TTL gains nothing but load. Where a route advertises refreshInterval, use it.',
+                  k: ru('Caching'),
+                  v: "\u041c\u0430\u0440\u0448\u0440\u0443\u0442\u044b \u0437\u0430\u0434\u0430\u044e\u0442 \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0435 TTL Cache-Control: \u043e\u0431\u044b\u0447\u043d\u043e 45\u201360 \u0441\u0435\u043a\u0443\u043d\u0434 \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u0435\u043c\u044b\u0445 \u043b\u0435\u043d\u0442 \u0438 \u0434\u043e \u0441\u0443\u0442\u043e\u043a \u0434\u043b\u044f \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u044b\u0445 \u0434\u0430\u043d\u043d\u044b\u0445. \u041e\u043f\u0440\u043e\u0441 \u0447\u0430\u0449\u0435, \u0447\u0435\u043c TTL, \u043d\u0435 \u0434\u0430\u0451\u0442 \u043d\u0438\u0447\u0435\u0433\u043e, \u043a\u0440\u043e\u043c\u0435 \u043d\u0430\u0433\u0440\u0443\u0437\u043a\u0438. \u0415\u0441\u043b\u0438 \u043c\u0430\u0440\u0448\u0440\u0443\u0442 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u0442 refreshInterval, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0435\u0433\u043e.",
                 },
                 {
-                  k: 'Rate limits',
-                  v: 'The three AI endpoints allow 5 requests per minute per IP and return 429 beyond that. Other routes are bounded indirectly by their upstream sources.',
+                  k: ru('Rate limits'),
+                  v: "\u0422\u0440\u0438 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0430 \u0418\u0418 \u0434\u043e\u043f\u0443\u0441\u043a\u0430\u044e\u0442 5 \u0437\u0430\u043f\u0440\u043e\u0441\u043e\u0432 \u0432 \u043c\u0438\u043d\u0443\u0442\u0443 \u043d\u0430 IP-\u0430\u0434\u0440\u0435\u0441 \u0438 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u044e\u0442 429 \u0441\u0432\u0435\u0440\u0445 \u044d\u0442\u043e\u0433\u043e. \u041e\u0441\u0442\u0430\u043b\u044c\u043d\u044b\u0435 \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u044b \u043a\u043e\u0441\u0432\u0435\u043d\u043d\u043e \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u044b \u0441\u0432\u043e\u0438\u043c\u0438 \u0432\u044b\u0448\u0435\u0441\u0442\u043e\u044f\u0449\u0438\u043c\u0438 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0430\u043c\u0438.",
                 },
-                { k: 'Timestamps', v: 'Every timestamp field is ISO 8601 in UTC.' },
+                { k: ru('Timestamps'), v: "\u041a\u0430\u0436\u0434\u043e\u0435 \u043f\u043e\u043b\u0435 \u043c\u0435\u0442\u043a\u0438 \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u2014 ISO 8601 \u0432 UTC." },
               ].map(row => (
                 <div key={row.k} className="rounded-xl border border-white/[0.07] bg-white/[0.015] p-3.5">
                   <div className="font-mono text-[11.5px] text-[var(--gold-primary)] mb-1.5">{row.k}</div>
@@ -680,15 +675,15 @@ mcp_servers:
                 </div>
               ))}
             </div>
-            <Callout tone="warn" title="Responsible use">
-              The RECON scanner and <Code>/api/osint/sweep</Code> generate traffic against the targets you name. Only
-              point them at infrastructure you own or have written authorisation to test. The remaining OSINT routes
-              are passive and query third-party datasets rather than the subject itself.
+            <Callout tone="warn" title={ru("Responsible use")}>
+              RECON-сканер и <Code>/api/osint/sweep</Code> генерируют трафик на указанные вами цели. Направляйте их только
+              на инфраструктуру, которой вы владеете или на тестирование которой у вас есть письменное разрешение. Остальные OSINT-маршруты
+              пассивны и запрашивают сторонние наборы данных, а не сам объект.
             </Callout>
           </Section>
 
           {API_GROUPS.map(group => (
-            <Section key={group.id} id={`api-${group.id}`} eyebrow="API Reference" title={group.title}>
+            <Section key={group.id} id={`api-${group.id}`} eyebrow={ru("API Reference")} title={ru(group.title)}>
               <p>{group.blurb}</p>
               <div className="space-y-2.5 pt-1">
                 {group.endpoints.map(ep => (
@@ -707,7 +702,7 @@ mcp_servers:
                   className="rounded-xl border border-white/[0.07] bg-white/[0.015] p-4 hover:border-[var(--gold-primary)]/30 transition-colors"
                 >
                   <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-[var(--text-muted)] mb-1">
-                    ← Previous
+                    {ru('← Previous')}
                   </div>
                   <div className="text-[12px] text-[var(--text-primary)]">{prev.title}</div>
                 </a>
@@ -720,7 +715,7 @@ mcp_servers:
                   className="rounded-xl border border-white/[0.07] bg-white/[0.015] p-4 hover:border-[var(--gold-primary)]/30 transition-colors sm:text-right"
                 >
                   <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-[var(--text-muted)] mb-1">
-                    Next →
+                    {ru('Next →')}
                   </div>
                   <div className="text-[12px] text-[var(--text-primary)]">{next.title}</div>
                 </a>
@@ -732,7 +727,7 @@ mcp_servers:
           <footer className="border-t border-white/[0.06] pt-6 pb-16 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-mono text-[var(--text-muted)]">
             {[
               { href: 'https://github.com/osiris-osint/osiris', label: 'GitHub' },
-              { href: 'https://github.com/osiris-osint/osiris/issues', label: 'Report an issue' },
+              { href: 'https://github.com/osiris-osint/osiris/issues', label: ru('Report an issue') },
             ].map(l => (
               <a
                 key={l.label}
@@ -741,17 +736,17 @@ mcp_servers:
                 rel="noopener noreferrer"
                 className="hover:text-[var(--gold-primary)] transition-colors"
               >
-                {l.label}
+                {ru(l.label)}
               </a>
             ))}
-            <span className="ml-auto opacity-60">MIT Licensed</span>
+            <span className="ml-auto opacity-60">{ru('MIT Licensed')}</span>
           </footer>
         </main>
 
         {/* ── Right rail: on this page ── */}
         <aside className="hidden xl:block w-52 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto styled-scrollbar py-16">
           <div className="text-[10px] font-mono tracking-[0.3em] uppercase text-[var(--text-muted)]/70 mb-3">
-            On this page
+            {ru('On this page')}
           </div>
           <div className="space-y-0.5">
             {ALL_SECTIONS.map(s => (
@@ -776,7 +771,7 @@ mcp_servers:
             <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m18 15-6-6-6 6" />
             </svg>
-            Back to top
+            {ru('Back to top')}
           </button>
         </aside>
       </div>

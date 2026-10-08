@@ -47,7 +47,7 @@ export default function KeyboardShortcuts() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Keyboard className="w-4 h-4 text-[var(--gold-primary)]" />
-                <span className="text-sm font-mono font-bold text-[var(--text-heading)] tracking-wider">SHORTCUTS</span>
+                <span className="text-sm font-mono font-bold text-[var(--text-heading)] tracking-wider">ГОРЯЧИЕ КЛАВИШИ</span>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-4 h-4" />

@@ -67,7 +67,7 @@ export default function DonBotScan({ initial = null, onScan }: {
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ticker, name or contract address"
+            placeholder="Тикер, название или адрес контракта"
             aria-label="Token to analyse"
             autoComplete="off"
             spellCheck={false}
@@ -123,7 +123,7 @@ export default function DonBotScan({ initial = null, onScan }: {
                 </span>
               )}
             </div>
-            <button onClick={close} title="Close DonBot" aria-label="Close DonBot" className="p-1 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/10 shrink-0">
+            <button onClick={close} title="Закрыть DonBot" aria-label="Close DonBot" className="p-1 rounded text-[var(--text-muted)] hover:text-white hover:bg-white/10 shrink-0">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -132,7 +132,7 @@ export default function DonBotScan({ initial = null, onScan }: {
             key={query}
             ref={frame}
             src={donbotFrameUrl(query)}
-            title="DonBot token analysis by DigitalDon"
+            title="Анализ токенов DonBot от DigitalDon"
             sandbox={DONBOT_SANDBOX}
             referrerPolicy="no-referrer"
             allow="fullscreen"

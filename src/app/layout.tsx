@@ -4,8 +4,8 @@ import "./globals.css";
 
 const SITE_URL = "https://osirisai.live";
 const SITE_NAME = "OSIRIS";
-const SITE_TITLE = "OSIRIS — Open Source Intelligence Platform | Live Flight Tracking, CCTV, OSINT Tools & More";
-const SITE_DESCRIPTION = "The open-source Palantir alternative. Track live aircraft, satellites, and worldwide CCTV cameras on a 3D globe. Run Nmap scans, DNS lookups, WHOIS queries, SSL cert analysis & threat intelligence — all from your browser. 20+ data sources including live earthquake, wildfire, cyber threat and conflict feeds, plus mapped reference data such as nuclear facilities. Free & open source.";
+const SITE_TITLE = "OSIRIS — платформа разведки с открытым исходным кодом (OSINT) | Живой трекинг авиации, CCTV, инструменты OSINT";
+const SITE_DESCRIPTION = "Открытая альтернатива Palantir (OSINT). Отслеживайте живую авиацию, спутники и камеры видеонаблюдения по всему миру на 3D-глобусе. Сканирование портов, DNS-запросы, WHOIS, анализ SSL-сертификатов и разведданные об угрозах — прямо из браузера. Более 20 источников данных: землетрясения, пожары, киберугрозы и зоны конфликтов в реальном времени, а также справочные данные на карте, включая ядерные объекты. Бесплатно и с открытым исходным кодом.";
 
 export const viewport: Viewport = {
   themeColor: "#D4AF37",
@@ -91,11 +91,11 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   openGraph: {
-    title: "OSIRIS — The Open-Source Palantir Alternative | Live Flights, CCTV, Satellites & OSINT Tools",
-    description: "Track 10K+ aircraft, 2K satellites & worldwide CCTV on a 3D globe. Run Nmap, DNS, WHOIS & threat intel scans from your browser. 20+ live intelligence feeds. Free. Open source.",
+    title: "OSIRIS — открытая альтернатива Palantir | Живой трекинг авиации, CCTV, спутники и инструменты OSINT",
+    description: "Более 10 000 самолётов, спутники и камеры видеонаблюдения по всему миру на 3D-глобусе. Сканирование портов, DNS, WHOIS прямо из браузера. Более 20 живых источников разведданных. Бесплатно и с открытым исходным кодом.",
     type: "website",
     siteName: SITE_NAME,
-    locale: "en_US",
+    locale: "ru_RU",
     url: SITE_URL,
     images: [
       {
@@ -109,8 +109,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "🛰️ OSIRIS — Open Source Palantir Alternative | Live Tracking + OSINT Tools",
-    description: "Track 10K+ flights, satellites & CCTV worldwide. Run Nmap, DNS, WHOIS scans from your browser. 20+ live intel feeds. Free & open source.",
+    title: "🛰️ OSIRIS — открытая альтернатива Palantir | Живой трекинг + инструменты OSINT",
+    description: "Более 10 000 самолётов, спутники и камеры видеонаблюдения по всему миру. Сканирование портов, DNS, WHOIS прямо из браузера. Более 20 живых источников разведданных. Бесплатно и с открытым исходным кодом.",
     
     images: [`${SITE_URL}/og-image.png`],
   },
@@ -179,7 +179,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr">
+    <html lang="ru" dir="ltr">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

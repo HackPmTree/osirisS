@@ -191,7 +191,7 @@ export default function MarketChart({ symbol, name, onClose, large = false }: Ma
             {rangeChange >= 0 ? '+' : '−'}{Math.abs(rangeChange).toFixed(2)}% {range}
           </span>
         )}
-        <button onClick={onClose} className={`${rangeChange === null ? 'ml-auto ' : ''}p-0.5 text-[var(--text-muted)] hover:text-white transition-colors shrink-0`} title="Close chart" aria-label="Close chart">
+        <button onClick={onClose} className={`${rangeChange === null ? 'ml-auto ' : ''}p-0.5 text-[var(--text-muted)] hover:text-white transition-colors shrink-0`} title="Закрыть график" aria-label="Close chart">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>

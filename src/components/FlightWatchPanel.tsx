@@ -196,7 +196,7 @@ function Row({ flight, telem, onRemove, onLocate, onDetail }: {
         {telem && (
           <button
             onClick={() => onLocate(telem.lat, telem.lng)}
-            title="Centre on this aircraft"
+            title="Центрировать на этом самолёте"
             className="p-0.5 text-[var(--text-muted)] hover:text-[var(--cyan-primary)] transition-colors"
           >
             <Crosshair className="w-3 h-3" />
@@ -204,7 +204,7 @@ function Row({ flight, telem, onRemove, onLocate, onDetail }: {
         )}
         <button
           onClick={() => onRemove(flight.icao24)}
-          title="Stop watching"
+          title="Прекратить слежение"
           aria-label={`Stop watching ${flight.callsign || flight.icao24}`}
           className="p-0.5 text-[var(--text-muted)] hover:text-[var(--alert-red)] transition-colors"
         >
