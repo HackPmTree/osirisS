@@ -43,6 +43,8 @@ import { diffSweep, appendEvents, type WatchBaseline, type WatchEvent } from '@/
 import { STORAGE_KEY, serializeShapes, deserializeShapes, shapesToGeoJSON, downloadFile } from '@/lib/aoi-export';
 const TokenPanel = dynamic(() => import('@/components/TokenPanel'));
 import SupportMenu from '@/components/SupportMenu';
+const GeoImportPanel = dynamic(() => import('@/components/GeoImportPanel'), { ssr: false });
+type ImportedLayer = { id: string; title: string; geojson: any; color?: string; opacity?: number };
 import { useOi } from '@/lib/oi/client';
 import { useAssist } from '@/lib/oi/assist/client';
 import type { Highlight, Site } from '@/lib/oi/assist/tools';
@@ -322,6 +324,10 @@ export default function Dashboard() {
   const [showRemote, setShowRemote] = useState(false);
   const [showArcGIS, setShowArcGIS] = useState(false);
   const [arcgisLayers, setArcgisLayers] = useState<Array<{ id: string; title: string; url: string; geojson: any; color: string; visible: boolean; opacity: number }>>([]);
+  // ── Geo-import (KML/KMZ/GeoJSON/GPX/Yandex links) — drawn through the same
+  // arcgis-style renderer so nothing else on the map has to change.
+  const [importedLayers, setImportedLayers] = useState<ImportedLayer[]>([]);
+  const [showGeoImport, setShowGeoImport] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number; bounds?: { west: number; south: number; east: number; north: number } } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<'layers'|'markets'|'intel'|'search'|'recon'|'remote'|'oi'|null>(null);
@@ -918,6 +924,19 @@ export default function Dashboard() {
     // with an accidental second AOI from the click that dismisses the first.
     setDrawMode(null);
     setDrawProgress(null);
+  }, []);
+
+  // ── GEO-IMPORT handlers: add/remove imported layers and fly to their extent ──
+  const handleImportAdd = useCallback((layer: ImportedLayer) => {
+    setImportedLayers(prev => [...prev.filter(l => l.id !== layer.id), layer]);
+  }, []);
+  const handleImportRemove = useCallback((id: string) => {
+    setImportedLayers(prev => prev.filter(l => l.id !== id));
+  }, []);
+  const handleImportBounds = useCallback((b: { west: number; south: number; east: number; north: number }) => {
+    const lat = (b.south + b.north) / 2;
+    const lng = (b.west + b.east) / 2;
+    setFlyToLocation({ lat, lng, bounds: b, ts: Date.now() });
   }, []);
 
   const handleExportGeoJSON = useCallback(() => {
@@ -1550,7 +1569,7 @@ export default function Dashboard() {
           scanTargets={scanTargets}
           demoMode={demoMode}
           theme={osirisTheme}
-          arcgisLayers={arcgisLayers.filter(l => l.visible).map(l => ({ id: l.id, title: l.title, geojson: l.geojson, color: l.color, opacity: l.opacity }))}
+          arcgisLayers={[...arcgisLayers.filter(l => l.visible), ...importedLayers].map(l => ({ id: l.id, title: l.title, geojson: l.geojson, color: (l as any).color, opacity: (l as any).opacity }))}
           onMapCenter={setMapCenter}
           route={activeRoute}
           userLocation={
@@ -1934,6 +1953,33 @@ export default function Dashboard() {
 
         {/* Separator */}
         <div className="w-4 h-px bg-white/10 mx-auto" />
+
+        {/* ── ИМПОРТ КАРТЫ (KML/KMZ/GeoJSON/GPX/Яндекс Карты) ── */}
+        <div className="relative group">
+          <button onClick={() => { setShowGeoImport(v => !v); setShowArcGIS(false); setShowRemote(false); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); }} className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${showGeoImport ? 'bg-[var(--gold-primary)]/20' : 'hover:bg-white/10'}`} title="Импорт карты — загрузить KML/KMZ, GeoJSON, GPX или ссылку Яндекс Карт" aria-label="Импорт карты" aria-expanded={showGeoImport}>
+            <MapPinned className={`w-4 h-4 ${showGeoImport ? 'text-[var(--gold-primary)]' : 'text-white/60'}`} />
+            {showGeoImport && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-full bg-current text-[var(--gold-primary)]"
+              />
+            )}
+            {importedLayers.length > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[var(--gold-primary)] text-black text-[9px] font-mono font-bold leading-none px-0.5">{importedLayers.length}</span>}
+          </button>
+          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">ИМПОРТ</span>
+          <AnimatePresence>
+            {showGeoImport && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-[300px]">
+                <GeoImportPanel
+                  importedLayers={importedLayers}
+                  onAddLayer={handleImportAdd}
+                  onRemoveLayer={handleImportRemove}
+                  onBounds={handleImportBounds}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── ARCGIS INTEL ── */}
         <div className="relative group">

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
-  Bot, Camera, ChevronDown, ExternalLink, HardDrive, KeyRound, Map as MapIcon, MessageCircle, Search, ShieldCheck, Sparkles, UserX, EyeOff,
+  Bot, Camera, ChevronDown, ExternalLink, HardDrive, KeyRound, Map as MapIcon, Search, ShieldCheck, Sparkles, UserX, EyeOff,
 } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -265,10 +265,6 @@ export default function PrivacyPage() {
             <a href="https://github.com/simplifaisoul/osiris/issues" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-primary)] px-3.5 py-2 text-[13px] hover:border-[var(--cyan-primary)] hover:text-[var(--cyan-primary)]">
               <ExternalLink className="h-4 w-4" /> Open an issue on GitHub
-            </a>
-            <a href="https://discord.gg/umBykEpb98" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-primary)] px-3.5 py-2 text-[13px] hover:border-[var(--cyan-primary)] hover:text-[var(--cyan-primary)]">
-              <MessageCircle className="h-4 w-4" /> Ask on Discord
             </a>
           </div>
         </Section>
