@@ -2,79 +2,89 @@
 
 # ⬡ OSIRIS
 
-### Open Source Intelligence & Reconnaissance Integrated System
+### Интегрированная система разведки с открытым исходным кодом (OSINT)
 
 [![Live Demo](https://img.shields.io/badge/osirisai.live-00E5FF?style=for-the-badge&logo=vercel&logoColor=white)](https://osirislive.app)
-[![Support OSIRIS](https://img.shields.io/badge/Support_Project-Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/posts/159077425)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![MapLibre](https://img.shields.io/badge/MapLibre_GL-GPU_Rendered-396CB2?style=for-the-badge)](https://maplibre.org)
 [![License](https://img.shields.io/badge/License-MIT-D4AF37?style=for-the-badge)](LICENSE)
 
-**A real-time global intelligence dashboard that aggregates live flight tracking, CCTV networks, earthquake monitoring, conflict zone mapping, and 24/7 news feeds into a single GPU-accelerated interface.**
+**Дашборд глобальной разведки в реальном времени: живой трекинг самолётов, сети видеонаблюдения (CCTV), мониторинг землетрясений, карты зон конфликтов и новостные трансляции 24/7 — в едином GPU-ускоренном интерфейсе.**
 
-[Live Demo](https://osirisai.live) · [Report Bug](https://github.com/simplifaisoul/osiris/issues) · [Request Feature](https://github.com/simplifaisoul/osiris/issues) · [Join Discord](https://discord.gg/umBykEpb98)
+[Онлайн-демо](https://osirisai.live) · [Сообщить об ошибке](https://github.com/osiris-osint/osiris/issues) · [Предложить функцию](https://github.com/osiris-osint/osiris/issues)
 
 </div>
 
 ---
 
-## Screenshots
+## Снимки экрана
 
 <p align="center">
-  <img src="docs/screenshots/taiwan-cctv.jpg" alt="OSIRIS over Taipei on the Night map, with live traffic-camera previews pinned across the city and the Longmen Building rooftop feed open" width="100%">
-  <br><sub><b>Taiwan</b> — Taipei's public traffic cameras streaming live on the Night map, one feed open full-size</sub>
+  <img src="docs/screenshots/taiwan-cctv.jpg" alt="OSIRIS над Тайбэем на ночной карте с живыми превью камер и открытой трансляцией" width="100%">
+  <br><sub><b>Тайвань</b> — публичные дорожные камеры Тайбэя в прямом эфире на ночной карте, один поток открыт в полном размере</sub>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/seoul-live-cctv.jpg" alt="OSIRIS over Seoul in 3D terrain around Namsan Tower, with live CCTV previews and the Cheonggyecheon feed open" width="100%">
-  <br><sub><b>Seoul</b> — live CCTV in 3D terrain around Namsan Tower, with the Cheonggyecheon feed playing</sub>
+  <img src="docs/screenshots/seoul-live-cctv.jpg" alt="OSIRIS над Сеулом в 3D-рельефе вокруг башни Намсан с живыми превью CCTV" width="100%">
+  <br><sub><b>Сеул</b> — живые камеры CCTV в 3D-рельефе вокруг башни Намсан, играет поток Чхонгечхон</sub>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/save-an-area.jpg" alt="A drawn area over mountain terrain in OSIRIS, with the live cameras inside it and the Drawing Tools panel showing the saved area" width="100%">
-  <br><sub><b>Save an Area</b> — draw a region and OSIRIS finds every camera inside it, ready to export as GeoJSON</sub>
+  <img src="docs/screenshots/save-an-area.jpg" alt="Выделенная область над горным рельефом со сохранёнными камерами" width="100%">
+  <br><sub><b>Сохранение области</b> — нарисуйте регион, и OSIRIS найдёт все камеры внутри него; результат можно экспортировать в GeoJSON</sub>
 </p>
 
 ---
 
-## Overview
+## Обзор
 
-Osiris is a production-grade OSINT platform that provides situational awareness across multiple intelligence domains. Built with Next.js 16 and MapLibre GL, every data point is rendered via WebGL for 60fps performance even with thousands of concurrent entities on-screen.
+OSIRIS — это production-платформа разведки с открытым исходным кодом (OSINT), обеспечивающая оперативную осведомлённость сразу в нескольких разведывательных доменах. Построена на Next.js 16 и MapLibre GL: каждая точка данных отрисовывается через WebGL, обеспечивая 60 fps даже при тысячах объектов на экране одновременно.
 
-### Key Capabilities
+### Основные возможности
 
-| Domain | Data Points | Sources |
+| Домен | Данные | Источники |
 |--------|------------|---------|
-| **Aviation** | Commercial, Private, Military, Jets | OpenSky Network |
-| **Maritime** | 39 Global Ports, 10 Chokepoints | Static Naval Intel |
-| **CCTV** | 17,000+ Cameras | TfL, WSDOT, Caltrans, ODOT, MDOT, HK Transport Dept, Taiwan THB, NZTA, Rijkswaterstaat, [Public Webcams](#acknowledgements) + more |
-| **Seismic** | Real-time M2.5+ | USGS Earthquake API |
-| **Fires** | Active Hotspots | NASA FIRMS |
-| **News** | 24/7 Live Streams | 23 Global Broadcasters |
-| **Weather** | Severe Events | NASA EONET |
-| **Space** | Solar Weather, Satellites | NOAA SWPC, N2YO |
-| **Cyber** | CVE Threats, Vulnerability Scanning | NVD, Custom Scanner |
-| **Conflict** | 13 Active Zones | Static OSINT Intel |
-| **Crypto** | BTC + ETH Wallet Tracing, OFAC SDN Match | blockstream.info, Blockscout, OpenSanctions |
-| **Sanctions** | Person / Org / Vessel SDN Search | OpenSanctions (US OFAC SDN mirror) |
-| **Telegram OSINT** | Geoparsed Posts from Public Channels | `t.me/s/<channel>` web preview |
+| **Авиация** | Гражданская, частная, военная авиация, бизнес-джеты | OpenSky Network |
+| **Морская навигация** | 39 мировых портов, 10 ключевых проливов | Статическая морская разведка |
+| **CCTV** | Более 17 000 камер | TfL, WSDOT, Caltrans, ODOT, MDOT, Департамент транспорта Гонконга, Taiwan THB, NZTA, Rijkswaterstaat, [публичные веб-камеры](#благодарности) и другие |
+| **Сейсмика** | Реальное время, магнитуда 2.5+ | USGS Earthquake API |
+| **Пожары** | Активные очаги | NASA FIRMS |
+| **Новости** | Прямые трансляции 24/7 | 23 мировых телеканала |
+| **Погода** | Опасные явления | NASA EONET |
+| **Космос** | Солнечная активность, спутники | NOAA SWPC, N2YO |
+| **Кибербезопасность** | Угрозы CVE, сканирование уязвимостей | NVD, собственный сканер |
+| **Конфликты** | 13 активных зон | Статическая OSINT-разведка |
+| **Криптовалюты** | Отслеживание кошельков BTC + ETH, проверка по OFAC SDN | blockstream.info, Blockscout, OpenSanctions |
+| **Санкции** | Поиск лиц / организаций / судов в списке SDN | OpenSanctions (зеркало US OFAC SDN) |
+| **Telegram OSINT** | Геопривязанные посты из публичных каналов | Веб-превью `t.me/s/<channel>` |
+
+### Импорт карт (Яндекс Карты, KML/KMZ, GeoJSON, GPX)
+
+В правом инструментальном меню доступна кнопка **«ИМПОРТ»**: загрузите файл карты или вставьте ссылку — и карта отобразится поверх базовой карты OSIRIS. Поддерживаются:
+
+- **Яндекс Карты** — ссылки вида `yandex.ru/maps/...`, включая ссылки на пользовательские карты Яндекс Конструктора;
+- **KML / KMZ** — форматы Google Earth и экспорт из большинства ГИС (например, карты зон СВО);
+- **GeoJSON / TopoJSON** — стандартный обменный ГИС-формат;
+- **GPX** — треки и точки маршрутов.
+
+Импортированные слои (точки, линии, полигоны, подписи) рендерятся тем же движком, что и встроенные слои, с настройкой цвета, прозрачности и подписей, а камера автоматически перелетает к границам загруженной карты.
 
 ---
 
-## Architecture
+## Архитектура
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  OSIRIS CLIENT                   │
+│                  КЛИЕНТ OSIRIS                  │
 │  ┌──────────┐  ┌──────────┐  ┌───────────────┐ │
-│  │ MapLibre  │  │  HUD     │  │  RECON Toolkit│ │
-│  │  GL (GPU) │  │ Panels   │  │  Port Scan    │ │
-│  │  WebGL    │  │ Layers   │  │  DNS / WHOIS  │ │
-│  │  Render   │  │ Controls │  │  Vuln Scanner │ │
+│  │ MapLibre │  │   HUD    │  │ RECON Toolkit │ │
+│  │  GL(GPU) │  │ Панели   │  │ Сканирование  │ │
+│  │  WebGL   │  │ Слои     │  │ DNS / WHOIS   │ │
+│  │ Рендер   │  │ Упр.     │  │ Сканер уязв.  │ │
 │  └──────────┘  └──────────┘  └───────────────┘ │
 ├─────────────────────────────────────────────────┤
-│               NEXT.JS API ROUTES                 │
+│              МАРШРУТЫ NEXT.JS API               │
 │  /api/flights         /api/earthquakes          │
 │  /api/cctv            /api/news                 │
 │  /api/fires           /api/maritime             │
@@ -84,218 +94,179 @@ Osiris is a production-grade OSINT platform that provides situational awareness 
 │  /api/osint/*  (whois, dns, ip, cve, sanctions, │
 │                 crypto, sweep, threats, …)      │
 ├─────────────────────────────────────────────────┤
-│              EXTERNAL DATA SOURCES               │
-│  OpenSky · USGS · NASA · NOAA · TfL · NVD      │
-│  GDACS · EONET · FIRMS · N2YO · RSS Feeds      │
+│             ВНЕШНИЕ ИСТОЧНИКИ ДАННЫХ            │
+│  OpenSky · USGS · NASA · NOAA · TfL · NVD       │
+│  GDACS · EONET · FIRMS · N2YO · RSS-ленты       │
 │  blockstream.info · Blockscout · OpenSanctions  │
-│  t.me public previews                            │
+│  Публичные превью t.me                          │
 └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Features
+## Возможности
 
-### Intelligence Layers
-- **16 toggleable data layers** with real-time entity counts
-- **GPU-accelerated rendering** — all map data rendered via WebGL, not DOM
-- **Progressive loading** — data fetched on-demand when layers are activated
-- **Viewport-aware** — only loads relevant data for the visible region
+### Разведывательные слои
+- **16 переключаемых слоёв данных** с подсчётом объектов в реальном времени
+- **GPU-ускоренная отрисовка** — все данные карты рендерятся через WebGL, а не через DOM
+- **Прогрессивная загрузка** — данные запрашиваются только при активации слоя
+- **Ориентация на вьюпорт** — загружаются только данные видимой области
 
-### OI — a prediction engine (bring your own key)
-**OI Assist**: talk to the map (press O). Ask in words, typed or spoken, and OI flies you there, switches the layers on, finds what is live (flights, military aircraft, ships, quakes, fires, weather, news, cameras, satellites), marks it on the globe in cyan with the area it searched, lists it in cards you can click through, reads the markets, opens panels and starts forecasts, all on your own model key.
+### OI — движок прогнозов (со своим ключом)
+**OI Assist**: говорите с картой (клавиша `O`). Спросите словами — текстом или голосом — и OI перелетит к нужному месту, включит необходимые слои, найдёт то, что происходит прямо сейчас (самолёты, военная авиация, корабли, землетрясения, пожары, погода, новости, камеры, спутники), отметит это на глобусе бирюзовым с областью поиска, выведет список кликабельных карточек, прочитает рыночные данные, откроет панели и запустит прогнозы — всё на вашем собственном ключе модели.
 
-**OI Forecast**: a prediction engine inspired by the community-made [Pythia](https://github.com/jangles-byte/Pythia) and by [MiroFish](https://github.com/666ghj/MiroFish). From Pythia comes the idea of forecasting from the live world OSIRIS already watches; from MiroFish, the method: cast the actors who shape an outcome and play them against each other in parallel simulated worlds. Ask a question and OI researches it from sources you can check (news, prices, prediction markets and the live feeds), runs the worlds, and has a report agent weigh the result against the crowd's price and a statistical baseline before it writes a calibrated forecast, every claim linked to its source. The whole run plays out on the globe as it happens.
-- **Your own data**: add files (CSV, JSON, Markdown, text, logs, web pages) or paste up to 100,000 characters. The world model reads it once; or have every actor read it in every period, and quote it. The extra input tokens are shown before you run, on your own key.
-- **Your own key**: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, DeepSeek, xAI, Mistral or Qwen. Kept in your browser, sent per request in a header, never stored on the server.
-- **REST API** under `/api/oi` with live Server-Sent Events, and an **MCP server** at `/api/mcp` so agents such as Hermes, Claude and Cursor can run predictions, steer them and read OSIRIS intelligence. See [the docs](https://osirisai.live/docs#oi).
+**OI Forecast**: движок предсказаний, вдохновлённый созданным сообществом [Pythia](https://github.com/jangles-byte/Pythia) и [MiroFish](https://github.com/666ghj/MiroFish). От Pythia — идея прогнозировать на основе живого мира, который OSIRIS уже наблюдает; от MiroFish — метод: определить участников, влияющих на исход, и играть ими друг против друга в параллельных симулированных мирах. Задайте вопрос — и OI исследует его по проверяемым источникам (новости, цены, рынки предсказаний и живые ленты), прогонит миры, а агент-репортёр сопоставит результат с ценой толпы и статистическим базлайном, прежде чем написать откалиброванный прогноз; каждое утверждение снабжено ссылкой на источник. Весь процесс проигрывается на глобусе в реальном времени.
+- **Ваши собственные данные**: добавьте файлы (CSV, JSON, Markdown, текст, логи, веб-страницы) или вставьте до 100 000 символов. Модель мира прочитает их один раз; либо пусть каждый участник читает их в каждом периоде с цитированием. Дополнительные входные токены показываются перед запуском — на вашем ключе.
+- **Ваш собственный ключ**: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, DeepSeek, xAI, Mistral или Qwen. Ключ хранится в браузере, передаётся в заголовке при каждом запросе и никогда не сохраняется на сервере.
+- **REST API** на `/api/oi` с живыми Server-Sent Events и **MCP-сервер** на `/api/mcp`, чтобы агенты вроде Hermes, Claude и Cursor могли запускать прогнозы, управлять ими и читать разведданные OSIRIS. См. [документацию](https://osirisai.live/docs#oi).
 
-### Texas CCTV
-Public TxDOT ITS snapshots are integrated with the existing camera markers, preview grid and viewer. Use `/api/cctv?region=texas` for Texas only; global and Texas location queries include the same source. District inventories are cached independently, with stale data retained during outages. Availability varies by district and camera; these are refreshing JPEG snapshots, not video streams.
+### Камеры Техаса (TxDOT)
+Публичные снимки TxDOT ITS интегрированы с существующими маркерами камер, сеткой превью и просмотрщиком. Для фильтра только по Техасу используйте `/api/cctv?region=texas`; глобальные запросы и поиск по локации также включают этот источник. Инвентари по округам кэшируются независимо, устаревшие данные сохраняются на время сбоев. Доступность варьируется по округам и камерам: это обновляемые JPEG-снимки, а не видеопотоки.
 
-Source: [TxDOT ITS](https://its.txdot.gov/its/District/DAL/cameras).
+Источник: [TxDOT ITS](https://its.txdot.gov/its/District/DAL/cameras).
 
-Run `npm test` for offline checks or `RUN_LIVE_TESTS=1 npx vitest run src/app/api/cctv/texas.test.ts` to check the public Texas inventory.
+Запустите `npm test` для офлайн-проверок или `RUN_LIVE_TESTS=1 npx vitest run src/app/api/cctv/texas.test.ts`, чтобы проверить публичный инвентарь камер Техаса.
 
-### RECON Toolkit
-- **Port Scanner** — TCP connect scan with service fingerprinting
-- **DNS Lookup** — Full record resolution (A, AAAA, MX, NS, TXT, CNAME)
-- **WHOIS** — Domain/IP registration data (auto-cross-checked against OFAC SDN)
-- **SSL/TLS Inspector** — Certificate chain analysis
-- **IP Intelligence** — Geolocation, ASN, threat reputation (auto-cross-checked against OFAC SDN)
-- **Vulnerability Scanner** — CVE lookup against NVD database
-- **Crypto Wallet Trace** — BTC + ETH lookup (balance, tx history, OFAC SDN sanctions flag)
-- **OFAC Sanctions Search** — query persons, organizations, vessels and aircraft against the US OFAC SDN list
+### Инструменты RECON
+- **Сканер портов** — TCP connect-сканирование с идентификацией сервисов
+- **DNS Lookup** — полное разрешение записей (A, AAAA, MX, NS, TXT, CNAME)
+- **WHOIS** — данные регистрации доменов/IP (автоматическая сверка с OFAC SDN)
+- **Инспектор SSL/TLS** — анализ цепочки сертификатов
+- **IP-разведка** — геолокация, ASN, репутация угроз (автоматическая сверка с OFAC SDN)
+- **Сканер уязвимостей** — поиск CVE по базе NVD
+- **Отслеживание криптокошельков** — запросы BTC + ETH (баланс, история транзакций, флаг санкций OFAC SDN)
+- **Поиск по санкциям OFAC** — запросы по лицам, организациям, судам и воздушным судам в списке US OFAC SDN
 
-### Live Broadcast Network
-- **23 live 24/7 news streams** from global broadcasters
-- Click any news dot on the map to open the live stream
-- Feeds from NBC, CBS, ABC, Sky News, Al Jazeera, France 24, NHK, WION, and more
+### Сеть прямых трансляций
+- **23 живых новостных канала 24/7** от мировых вещателей
+- Нажмите на любую новостную точку на карте, чтобы открыть прямой эфир
+- Источники: NBC, CBS, ABC, Sky News, Al Jazeera, France 24, NHK, WION и другие
 
-### Telegram OSINT Layer
-- **Public-channel feed** scraped from the unauthenticated `t.me/s/<channel>` web preview — no Bot API token, no MTProto
-- Default curated set of 5 channels (EN + RU/UA war reporting), overridable via `OSIRIS_TELEGRAM_CHANNELS`
-- Posts are geoparsed against a multilingual place dictionary (EN + Cyrillic + Arabic) and plotted on the map
-- Click any cyan dot to read the post and jump to the original on Telegram
+### Слой Telegram OSINT
+- **Лента публичных каналов**, получаемая из неавторизованного веб-превью `t.me/s/<channel>` — без токена Bot API, без MTProto
+- Набор по умолчанию из 5 каналов (EN + RU/UA военные сводки), переопределяется через `OSIRIS_TELEGRAM_CHANNELS`
+- Посты геопривязываются по многоязычному словарю локаций (EN + кириллица + арабица) и отображаются на карте
+- Нажмите на бирюзовую точку, чтобы прочитать пост и перейти к оригиналу в Telegram
 
-### Crypto Wallet Intelligence
-- **BTC** lookups via [blockstream.info](https://blockstream.info) (Esplora API, keyless)
-- **ETH** lookups via [Blockscout](https://github.com/blockscout/blockscout)'s public ETH instance (`eth.blockscout.com`, keyless)
-- Every lookup is cross-checked against the OFAC SDN sanctioned-address list (mirrored from [`0xB10C/ofac-sanctioned-digital-currency-addresses`](https://github.com/0xB10C/ofac-sanctioned-digital-currency-addresses))
-- Sanctioned wallets surface a red **SANCTIONED — OFAC SDN** badge in the RECON panel
+### Разведка криптокошельков
+- Запросы **BTC** через [blockstream.info](https://blockstream.info) (Esplora API, без ключа)
+- Запросы **ETH** через публичный инстанс Blockscout ([eth.blockscout.com](https://eth.blockscout.com), без ключа)
+- Каждый запрос сверяется со списком санкционированных адресов OFAC SDN (зеркало репозитория [`0xB10C/ofac-sanctioned-digital-currency-addresses`](https://github.com/0xB10C/ofac-sanctioned-digital-currency-addresses))
+- Санкционные кошельки получают красный бейдж **SANCTIONED — OFAC SDN** в панели RECON
 
-### OFAC SDN Cross-Check
-- Standalone `SANCTIONS` tab in the RECON toolkit — full-text search across persons, organisations, vessels and aircraft
-- WHOIS and IP-intel routes auto-cross-check registrant / ASN-owner names against the SDN list and surface an inline alert
-- Data sourced from [OpenSanctions](https://www.opensanctions.org) (CC-BY 4.0) — keyless, ~7 MB cached in-memory for 24h
+### Сверка с санкционным списком OFAC SDN
+- Отдельная вкладка `SANCTIONS` в инструментах RECON — полнотекстовый поиск по лицам, организациям, судам и воздушным судам
+- Маршруты WHOIS и IP-разведки автоматически сверяют имена registrant / владельца ASN со списком SDN и выводят предупреждение
+- Данные предоставлены [OpenSanctions](https://www.opensanctions.org) (CC-BY 4.0) — без ключа, ~7 МБ кэшируются в памяти на 24 часа
 
-### Conflict Zone Monitoring
-- **13 active conflict/tension zones** with severity-coded warning markers
-- Active Wars: Ukraine, Gaza, Sudan, Myanmar, DRC, Yemen
-- High Tension: Syria, Lebanon, Sahel, Somalia, Red Sea
-- Elevated: Taiwan Strait, Korean DMZ
+### Мониторинг зон конфликтов
+- **13 активных зон конфликтов и напряжённости** с маркерами, окрашенными по уровню опасности
+- Активные войны: Украина, Газа, Судан, Мьянма, ДР Конго, Йемен
+- Высокая напряжённость: Сирия, Ливан, Сахель, Сомали, Красное море
+- Повышенная: Тайваньский пролив, Демилитаризованная зона Кореи
 
-### Performance Optimized
-- **75% reduction in edge requests** vs initial release
-- Aggressive polling relaxation (15-30 min intervals for stable data)
-- Static data served from memory (zero external API calls for news feeds)
-- `layerFetchedRef` prevents duplicate API requests
+### Оптимизация производительности
+- **На 75% меньше edge-запросов** по сравнению с первым релизом
+- Агрессивное ослабление поллинга (интервалы 15–30 минут для стабильных данных)
+- Статические данные отдаются из памяти (нулевые внешние API-вызовы для новостных лент)
+- `layerFetchedRef` предотвращает дублирование API-запросов
 
 ---
 
-## Quick Start
+## Быстрый старт
 
 ```bash
-git clone https://github.com/simplifaisoul/osiris.git
+git clone https://github.com/osiris-osint/osiris.git
 cd osiris
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Откройте [http://localhost:3000](http://localhost:3000)
 
-### Docker / Self-Hosting
+### Docker / самостоятельный хостинг
 
 ```bash
-git clone https://github.com/simplifaisoul/osiris.git
+git clone https://github.com/osiris-osint/osiris.git
 cd osiris
-cp .env.template .env     # optional — configure keys / port
+cp .env.template .env     # опционально — настройте ключи / порт
 docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The image is a multi-stage
-`node:22-alpine` standalone build (~220 MB, non-root). The compose file also
-carries CasaOS app metadata (`x-casaos:`) for one-click install on
-[CasaOS](https://casaos.io). See **[DOCKER.md](DOCKER.md)** for the full Docker,
-CasaOS and API-key guide.
+Откройте [http://localhost:3000](http://localhost:3000). Образ собирается мультистейджево из `node:22-alpine` в standalone-режиме (~220 МБ, без root). Compose-файл также содержит метаданные приложения CasaOS (`x-casaos:`) для установки в один клик на [CasaOS](https://casaos.io). Полное руководство по Docker, CasaOS и API-ключам — в **[DOCKER.md](DOCKER.md)**.
 
-**Prebuilt image (GHCR)** — skip the build and pull it directly:
+**Готовый образ (GHCR)** — пропустите сборку и тяните напрямую:
 
 ```bash
-docker pull ghcr.io/simplifaisoul/osiris:latest
-docker run -d -p 3000:3000 --env-file .env ghcr.io/simplifaisoul/osiris:latest
+docker pull ghcr.io/osiris-osint/osiris:latest
+docker run -d -p 3000:3000 --env-file .env ghcr.io/osiris-osint/osiris:latest
 ```
 
-**Custom port** — the container always listens on `3000`; set `OSIRIS_PORT` in
-`.env` to change the published host port (e.g. `OSIRIS_PORT=3005`) without
-editing the compose file.
+**Нестандартный порт** — контейнер всегда слушает `3000`; задайте `OSIRIS_PORT` в `.env`, чтобы изменить публикуемый порт хоста (например, `OSIRIS_PORT=3005`) без правки compose-файла.
 
-### Environment Variables
+### Переменные окружения
 
-OSIRIS works **partially without any API keys** — all core feeds use public,
-keyless sources. Copy [`.env.template`](.env.template) to `.env` and set only
-what you need:
+OSIRIS **частично работает без каких-либо API-ключей** — все основные ленты используют публичные источники без ключей. Скопируйте [`.env.template`](.env.template) в `.env` и заполните только нужное:
 
 ```env
-# Published host port (container always listens on 3000). Default: 3000
+# Публикуемый порт хоста (контейнер всегда слушает 3000). По умолчанию: 3000
 OSIRIS_PORT=3000
 
-# RECON scanner backend (the only vars the current code reads).
-# SCANNER_KEY must match the backend's OSIRIS_KEY — generate with: openssl rand -hex 32
+# Бэкенд сканера RECON (единственные переменные, которые читает текущий код).
+# SCANNER_KEY должен совпадать с OSIRIS_KEY бэкенда — сгенерируйте: openssl rand -hex 32
 SCANNER_URL=
 SCANNER_KEY=
 
-# Optional, for higher rate limits / future sources (see DOCKER.md for signup links)
+# Опционально, для повышенных лимитов / будущих источников (ссылки для регистрации — в DOCKER.md)
 FIRMS_API_KEY=                # NASA FIRMS  — firms.modaps.eosdis.nasa.gov/api/map_key/
-OPENSKY_CLIENT_ID=            # OpenSky OAuth2 (since Mar 2025) — opensky-network.org
+OPENSKY_CLIENT_ID=            # OpenSky OAuth2 (с марта 2025) — opensky-network.org
 OPENSKY_CLIENT_SECRET=
-N2YO_API_KEY=                 # N2YO satellites — n2yo.com (Profile → API key)
-AIS_API_KEY=                 # aisstream.io maritime
+N2YO_API_KEY=                 # Спутники N2YO — n2yo.com (Profile → API key)
+AIS_API_KEY=                  # Морской трафик aisstream.io
 ```
 
-> Without `SCANNER_URL`/`SCANNER_KEY` the RECON toolkit returns `503`; every
-> other layer works out of the box. `.env` is gitignored — only the template is committed.
+> Без `SCANNER_URL`/`SCANNER_KEY` инструменты RECON вернут `503`; все остальные слои работают «из коробки». Файл `.env` добавлен в gitignore — в репозитории только шаблон.
 
 ---
 
-## Tech Stack
+## Технологический стек
 
-| Layer | Technology |
+| Слой | Технология |
 |-------|-----------|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| Language | TypeScript 5 |
-| Map Engine | MapLibre GL JS (WebGL) |
-| Animations | Framer Motion |
-| Icons | Lucide React |
-| Styling | Custom CSS Design System |
-| Deployment | Vercel Edge Network |
+| Фреймворк | Next.js 16 (App Router, Turbopack) |
+| Язык | TypeScript 5 |
+| Картографический движок | MapLibre GL JS (WebGL) |
+| Анимации | Framer Motion |
+| Иконки | Lucide React |
+| Стили | Собственная дизайн-система на CSS |
+| Развёртывание | Vercel Edge Network |
 
 ---
 
-## Keyboard Shortcuts
+## Горячие клавиши
 
-| Key | Action |
+| Клавиша | Действие |
 |-----|--------|
-| `F` | Toggle flight layers |
-| `E` | Toggle earthquakes |
-| `S` | Toggle satellites |
-| `D` | Toggle day/night cycle |
-| `Escape` | Close panels |
+| `F` | Переключить слои авиации |
+| `E` | Переключить землетрясения |
+| `S` | Переключить спутники |
+| `D` | Переключить цикл день/ночь |
+| `Escape` | Закрыть панели |
 
 ---
 
-## Acknowledgements
+## Благодарности
 
-**Public webcams** — the cameras in this layer are open data: each one is broadcast
-publicly by whoever runs it, on their own site or their own channel. What the web
-lacked was a catalogue of them.
+**Публичные веб-камеры** — камеры этого слоя являются открытыми данными: каждая из них транслируется публично её владельцем, на собственном сайте или канале. Тому, что есть в интернете, не хватало лишь каталога.
 
-[bekijkhet.nu](https://www.bekijkhet.nu/) is that catalogue, and it is the basis for
-every camera in the layer. Bram and Annelies have kept it by hand since 2012, and
-without their index these cameras would still be scattered across several hundred
-unrelated sites with no way to find them.
+[bekijkhet.nu](https://www.bekijkhet.nu/) — такой каталог, и он является основой для каждой камеры слоя. Браам и Аннелис ведут его вручную с 2012 года; без их указателя эти камеры так и оставались бы разбросанными по нескольким сотням несвязанных сайтов, и их было бы невозможно найти.
 
-OSIRIS links every one of them straight through to the operator who runs it, which is
-also how bekijkhet.nu asks to be read.
+OSIRIS ссылается на каждую камеру напрямую на сайт её оператора — именно так bekijkhet.nu и просит использовать их данные.
 
-**OI** — the method behind OI follows [MiroFish](https://github.com/666ghj/MiroFish),
-the open-source swarm-intelligence prediction engine: seed a parallel world from real
-material, populate it with agents, let them interact while variables are injected, and
-hand the simulation to a report agent. OSIRIS rebuilds that method natively for its own
-feeds and globe; no MiroFish code is used.
+**OI** — методология OI следует [MiroFish](https://github.com/666ghj/MiroFish), open-source движку прогнозов на роевом интеллекте: засеять параллельный мир из реальных материалов, населить его агентами, дать им взаимодействовать при внедрении переменных и передать симуляцию агенту-репортёру. OSIRIS воспроизводит эту методологию нативно для своих собственных лент и глобуса; код MiroFish не используется.
 
 ---
 
-## License
+## Лицензия
 
-MIT — see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-**🛠️ SUPPORT THE OSIRIS PROJECT**
-The OSIRIS Global Intelligence Grid is entirely open-source, but running the backend scanners and data firehoses isn't cheap.
-
-If you want to help keep the servers alive, and support us to get access to better tools  unlock the **Special OSIRIS Console**, Currently Just a Cool UI. a you can officially support the project here : 
-
-🔗 [Support OSIRIS on Patreon](https://www.patreon.com/posts/159077425)
-
-*Supporters receive the `🔴 RedTeam Console` role and access to encrypted developer comms.*
-
-
-**Built by [simplifaisoul](https://github.com/simplifaisoul)**
-
-[Join our Discord to be a part of this movement!](https://discord.gg/umBykEpb98)
-
-</div>
+MIT — подробности см. в [LICENSE](LICENSE).

@@ -6,19 +6,20 @@ import { API_GROUPS, ENDPOINT_COUNT, endpointId } from './apiCatalog';
 import { Callout, Code, CodeBlock, Pre, Section } from './docsPrimitives';
 import EndpointCard from './EndpointCard';
 import CommandPalette, { buildPaletteItems } from './CommandPalette';
+import { ru } from './translate';
 
 const GUIDE_SECTIONS = [
-  { id: 'overview', title: 'Overview' },
-  { id: 'quickstart', title: 'Quick Start' },
-  { id: 'self-hosting', title: 'Self-Hosting' },
-  { id: 'configuration', title: 'Configuration' },
-  { id: 'interface', title: 'Interface Guide' },
-  { id: 'oi', title: 'OI & MCP' },
-  { id: 'shortcuts', title: 'Keyboard Shortcuts' },
+  { id: 'overview', title: 'Обзор' },
+  { id: 'quickstart', title: 'Быстрый старт' },
+  { id: 'self-hosting', title: 'Самостоятельный хостинг' },
+  { id: 'configuration', title: 'Конфигурация' },
+  { id: 'interface', title: 'Руководство по интерфейсу' },
+  { id: 'oi', title: 'OI и MCP' },
+  { id: 'shortcuts', title: 'Горячие клавиши' },
 ];
 
 const API_SECTIONS = [
-  { id: 'api', title: 'Conventions' },
+  { id: 'api', title: 'Соглашения' },
   ...API_GROUPS.map(g => ({ id: `api-${g.id}`, title: g.title })),
 ];
 
@@ -180,7 +181,7 @@ export default function DocsClient() {
           </button>
 
           <a
-            href="https://github.com/simplifaisoul/osiris"
+            href="https://github.com/osiris-osint/osiris"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub repository"
@@ -375,7 +376,7 @@ print(len(data["commercial_flights"]), "commercial")`,
 
           <Section id="self-hosting" eyebrow="Guide" title="Self-Hosting">
             <p>OSIRIS needs Node 20+ and no database. A local instance is three commands:</p>
-            <Pre label="Local development" lang="bash">{`git clone https://github.com/simplifaisoul/osiris.git
+            <Pre label="Local development" lang="bash">{`git clone https://github.com/osiris-osint/osiris.git
 cd osiris
 npm install
 npm run dev        # http://localhost:3000`}</Pre>
@@ -730,10 +731,8 @@ mcp_servers:
           {/* Footer */}
           <footer className="border-t border-white/[0.06] pt-6 pb-16 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-mono text-[var(--text-muted)]">
             {[
-              { href: 'https://github.com/simplifaisoul/osiris', label: 'GitHub' },
-              { href: 'https://discord.gg/EPaFD5FFKf', label: 'Discord' },
-              { href: 'https://x.com/soulsimplifai', label: 'X' },
-              { href: 'https://github.com/simplifaisoul/osiris/issues', label: 'Report an issue' },
+              { href: 'https://github.com/osiris-osint/osiris', label: 'GitHub' },
+              { href: 'https://github.com/osiris-osint/osiris/issues', label: 'Report an issue' },
             ].map(l => (
               <a
                 key={l.label}

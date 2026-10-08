@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ru } from './translate';
 
 /* ─────────────────────────────────────────────────────────────
    Inline code
@@ -218,7 +219,7 @@ export function Callout({
           <path d={t.icon} />
         </svg>
         <span className="text-[11px] font-mono tracking-[0.2em] uppercase" style={{ color: t.border }}>
-          {title || t.label}
+          {ru(title || t.label)}
         </span>
       </div>
       <div className="text-[12.5px] leading-[1.75] text-[var(--text-secondary)]">{children}</div>
@@ -245,11 +246,11 @@ export function Section({
     <section id={id} className="scroll-mt-28 mb-20">
       {eyebrow && (
         <div className="text-[10px] font-mono tracking-[0.3em] uppercase text-[var(--cyan-primary)]/60 mb-2">
-          {eyebrow}
+          {ru(eyebrow)}
         </div>
       )}
       <h2 className="group flex items-center gap-2 text-[22px] md:text-[26px] font-bold text-[var(--text-heading)] tracking-tight mb-5">
-        {title}
+        {ru(title)}
         <a
           href={`#${id}`}
           aria-label={`Link to ${title}`}
