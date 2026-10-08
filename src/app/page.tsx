@@ -42,7 +42,6 @@ import { pickLandingCity } from '@/lib/landing-cities';
 import { diffSweep, appendEvents, type WatchBaseline, type WatchEvent } from '@/lib/watch';
 import { STORAGE_KEY, serializeShapes, deserializeShapes, shapesToGeoJSON, downloadFile } from '@/lib/aoi-export';
 const TokenPanel = dynamic(() => import('@/components/TokenPanel'));
-import SupportMenu from '@/components/SupportMenu';
 const GeoImportPanel = dynamic(() => import('@/components/GeoImportPanel'), { ssr: false });
 type ImportedLayer = { id: string; title: string; geojson: any; color?: string; opacity?: number };
 import { useOi } from '@/lib/oi/client';
@@ -1771,18 +1770,15 @@ export default function Dashboard() {
         <span className="text-[11px] font-bold tracking-[0.2em] text-[var(--text-muted)] opacity-50">{APP_VERSION}</span>
         
         <TokenPanel />
-
-        <SupportMenu />
       </motion.div>
 
       {/* ── MOBILE: Compact top status ── */}
       {/* The route planner claims the top of a phone screen; leaving this in
-          place would put the support badge underneath the destination field. */}
+          place would put the badge underneath the destination field. */}
       {isMobile && !showDirections && !navSession && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: revealed ? 1 : 0 }} transition={hudIn(0.35)} className="absolute top-3 right-3 z-[200] pointer-events-auto flex flex-col items-end gap-1.5">
           <div className="flex items-center gap-2">
             <TokenPanel />
-            <SupportMenu compact />
           </div>
         </motion.div>
       )}

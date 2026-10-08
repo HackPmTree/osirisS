@@ -14,7 +14,7 @@ app, and configuring the optional API keys.
 ## 1. Docker Compose (recommended)
 
 ```bash
-git clone https://github.com/simplifaisoul/osiris.git
+git clone https://github.com/osiris-osint/osiris.git
 cd osiris
 
 # optional: configure keys / scanner backend
@@ -29,7 +29,7 @@ What the compose file does:
 
 - **`build:`** — compose builds the image locally from the `Dockerfile`, so
   you always run the code you just cloned. To run the prebuilt registry image
-  instead, add `image: ghcr.io/simplifaisoul/osiris:latest` to the `osiris`
+  instead, add `image: ghcr.io/osiris-osint/osiris:latest` to the `osiris`
   service and drop the `build:` block.
 - **`env_file: .env` (`required: false`)** — if a `.env` file exists its
   values are injected into the container; if it's missing, OSIRIS still starts
@@ -55,10 +55,10 @@ Container Registry on every push to `master` and every `v*.*.*` tag, so you can
 run OSIRIS without building anything:
 
 ```bash
-docker pull ghcr.io/simplifaisoul/osiris:latest   # or a pinned tag, e.g. :0.1.0
+docker pull ghcr.io/osiris-osint/osiris:latest   # or a pinned tag, e.g. :0.1.0
 docker run -d --name osiris \
   -p 3005:3000 --env-file .env --restart unless-stopped \
-  ghcr.io/simplifaisoul/osiris:latest
+  ghcr.io/osiris-osint/osiris:latest
 ```
 
 The package is public — no `docker login` is required to pull it.
@@ -103,7 +103,7 @@ metadata.
 > relative `build:` context may not resolve there. If importing the YAML
 > directly, either build/tag `osiris:latest` first
 > (`docker build -t osiris:latest /path/to/osiris`) or replace the `build:`
-> block with `image: ghcr.io/simplifaisoul/osiris:latest`.
+> block with `image: ghcr.io/osiris-osint/osiris:latest`.
 
 ---
 

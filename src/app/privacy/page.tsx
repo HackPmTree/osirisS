@@ -262,7 +262,7 @@ export default function PrivacyPage() {
             If something here is unclear, or you think we have missed something, tell us and we will put it right.
           </p>
           <div className="mt-4 flex flex-wrap gap-2.5">
-            <a href="https://github.com/simplifaisoul/osiris/issues" target="_blank" rel="noopener noreferrer"
+            <a href="https://github.com/osiris-osint/osiris/issues" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-primary)] px-3.5 py-2 text-[13px] hover:border-[var(--cyan-primary)] hover:text-[var(--cyan-primary)]">
               <ExternalLink className="h-4 w-4" /> Open an issue on GitHub
             </a>

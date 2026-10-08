@@ -3,7 +3,7 @@ services:
   osiris:
     # Builds locally from the Dockerfile so you always run the cloned code.
     # To use the prebuilt image instead, replace the `build:` block below with
-    # `image: ghcr.io/simplifaisoul/osiris:latest`.
+    # `image: ghcr.io/osiris-osint/osiris:latest`.
     build:
       context: .
       dockerfile: Dockerfile
@@ -66,8 +66,8 @@ x-casaos:
     - amd64
     - arm64
   main: osiris
-  author: simplifaisoul
-  developer: simplifaisoul
+  author: osiris-osint
+  developer: osiris-osint
   category: Network
   description:
     en_us: >-
@@ -81,10 +81,10 @@ x-casaos:
     en_us: Real-time global OSINT intelligence dashboard
   title:
     en_us: OSIRIS
-  icon: https://raw.githubusercontent.com/simplifaisoul/osiris/master/public/casaos-icon.png
-  thumbnail: https://raw.githubusercontent.com/simplifaisoul/osiris/master/public/og-image.png
+  icon: https://raw.githubusercontent.com/osiris-osint/osiris/master/public/casaos-icon.png
+  thumbnail: https://raw.githubusercontent.com/osiris-osint/osiris/master/public/og-image.png
   screenshot_link:
-    - https://raw.githubusercontent.com/simplifaisoul/osiris/master/public/og-image.png
+    - https://raw.githubusercontent.com/osiris-osint/osiris/master/public/og-image.png
   scheme: http
   hostname: ""
   port_map: "3000"

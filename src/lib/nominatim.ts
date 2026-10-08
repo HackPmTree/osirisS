@@ -8,7 +8,7 @@ import { httpJson } from '@/lib/httpJson';
  * On 2026-09-20 Nominatim's sysadmin told us we were running at over 10
  * requests a second against a service whose policy allows one, across every
  * user of that service, and that a ban was likely
- * (github.com/simplifaisoul/osiris/issues/16). We were: the search box and the
+ * (см. issue #16 оригинального репозитория). We were: the search box and the
  * map's location label asked Nominatim straight from the browser, so the rate
  * rose with the number of people looking at the site and nothing was shared
  * between them, while three server routes asked on their own budgets.
