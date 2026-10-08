@@ -87,6 +87,12 @@ export const trenchScanSchema = z.object({
   resolutionPx: z.number().int().min(256).max(2048).default(768),
   /** Сохранять ли найденные линии в хранилище сразу. */
   autosave: z.boolean().default(false),
+  /**
+   * Полилинии, переданные оператором (обводы) — классифицируются локальной
+   * эвристикой «окоп vs дорога», когда Python-движок OpenCV не поднят.
+   * Каждая линия: массив точек [lon, lat]; до 50 линий, ≤500 вершин.
+   */
+  lines: z.array(z.array(lngLat).min(2).max(500)).max(50).optional(),
 });
 
 /** Ошибки Zod → плоский русскоязычный текст для HTTP-ответа. */

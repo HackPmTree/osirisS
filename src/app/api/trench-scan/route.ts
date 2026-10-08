@@ -60,10 +60,9 @@ export async function POST(req: NextRequest) {
 
   /* ── Лёгкий режим без растра: классификация переданных оператором
         полилиний (обводов) по метрикам формы. Работает всегда и даёт
-        честный «окоп vs дорога» вердикт по геометрии. ───────────────── */
-  const rawLines: [number, number][][] = Array.isArray((body as any)?.lines)
-    ? (body as any).lines
-    : [];
+        честный «окоп vs дорога» вердикт по геометрии. Линии берутся из
+        валидированного Zod-входа (parsed.data.lines), а не из сырого тела. ── */
+  const rawLines: [number, number][][] = parsed.data.lines ?? [];
   const results: Record<string, unknown>[] = [];
   for (const coords of rawLines.slice(0, 50)) {
     if (!Array.isArray(coords) || coords.length < 2) continue;

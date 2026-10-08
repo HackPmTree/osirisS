@@ -325,6 +325,18 @@ export default function Dashboard() {
   // ── Geo-import (KML/KMZ/GeoJSON/GPX/Yandex links) — drawn through the same
   // arcgis-style renderer so nothing else on the map has to change.
   const [importedLayers, setImportedLayers] = useState<ImportedLayer[]>([]);
+  /* ── Слой укреплений (окопов): данные из /api/trenches + счётчик обновления.
+     Включён по умолчанию — модуль «ОКОПЫ» в левом меню сразу виден на карте. ── */
+  const [trenchVersion, setTrenchVersion] = useState(0);
+  const [trenchGeoJSON, setTrenchGeoJSON] = useState<any>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/trenches', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { if (!cancelled && j?.geojson) setTrenchGeoJSON(j.geojson); })
+      .catch(() => { /* сервер недоступен — слой остаётся пустым */ });
+    return () => { cancelled = true; };
+  }, [trenchVersion]);
 
   // ── GEO-IMPORT handlers: add/remove imported layers and fly to their extent ──
   const handleImportAdd = useCallback((layer: ImportedLayer) => {
@@ -514,6 +526,8 @@ export default function Dashboard() {
     terrain_elevation: false,
     malware: false,
     cyber_attacks: false,
+    /* Слой укреплений (окопы) — включён: модуль «ОКОПЫ» в левом меню. */
+    trenches: true,
     gdelt_events: false,
     cf_outages: false,
     cf_attacks: false,
@@ -640,6 +654,15 @@ export default function Dashboard() {
     onAddImportedLayer: handleImportAdd,
     onRemoveImportedLayer: handleImportRemove,
     onImportBounds: handleImportBounds,
+    /* «Картограф укреплений» (модуль ОКОПЫ в левом меню): центр/зум карты,
+       готовые обводы оператора, запуск полилинии и сигнал обновить слой. */
+    trenchProps: {
+      center: [mapCenter?.lat ?? 50.284959, mapCenter?.lng ?? 37.681517] as [number, number],
+      zoom: mapView.zoom,
+      shapes: drawnPolygons,
+      onStartDrawLine: () => { setShowDrawing(true); setDrawMode('line'); },
+      onSaved: () => setTrenchVersion(v => v + 1),
+    },
   };
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({});
   const [liveFeedUrl, setLiveFeedUrl] = useState<string | null>(null);
@@ -1571,7 +1594,13 @@ export default function Dashboard() {
           scanTargets={scanTargets}
           demoMode={demoMode}
           theme={osirisTheme}
-          arcgisLayers={[...arcgisLayers.filter(l => l.visible), ...importedLayers].map(l => ({ id: l.id, title: l.title, geojson: l.geojson, color: (l as any).color, opacity: (l as any).opacity }))}
+          arcgisLayers={[
+            ...arcgisLayers.filter(l => l.visible),
+            ...importedLayers,
+            /* Слой укреплений: тёмно-коричневые линии окопов поверх спутника,
+               чтобы отличаться от красных линий фронта. */
+            ...(activeLayers.trenches && trenchGeoJSON ? [{ id: 'trench-layer', title: 'Укрепления (окопы)', geojson: trenchGeoJSON, color: '#5D4037', opacity: 0.95 }] : []),
+          ].map(l => ({ id: l.id, title: l.title, geojson: l.geojson, color: (l as any).color, opacity: (l as any).opacity }))}
           onMapCenter={setMapCenter}
           route={activeRoute}
           userLocation={
