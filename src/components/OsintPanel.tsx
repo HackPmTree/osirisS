@@ -23,11 +23,11 @@ import DigitalDonMark from '@/components/DigitalDonMark';
  * the toolkit scannable by what you are investigating.
  */
 const GROUPS = [
-  { id: 'network', label: 'NETWORK & HOST', hint: 'IPs, ports, routing, hardware' },
-  { id: 'domain', label: 'DOMAIN & WEB', hint: 'DNS, certificates, site fingerprinting' },
-  { id: 'identity', label: 'IDENTITY', hint: 'People, handles, accounts' },
-  { id: 'threat', label: 'THREAT & EXPOSURE', hint: 'Reputation and breach data' },
-  { id: 'chain', label: 'BLOCKCHAIN', hint: 'Wallets, tokens and on-chain incidents' },
+  { id: 'network', label: 'СЕТЬ И ХОСТ', hint: 'IP, порты, маршрутизация, оборудование' },
+  { id: 'domain', label: 'ДОМЕН И ВЕБ', hint: 'DNS, сертификаты, фингерпринтинг сайтов' },
+  { id: 'identity', label: 'ЛИЧНОСТЬ', hint: 'Люди, ники, аккаунты' },
+  { id: 'threat', label: 'УГРОЗЫ И РИСКИ', hint: 'Репутация и данные об утечках' },
+  { id: 'chain', label: 'БЛОКЧЕЙН', hint: 'Кошельки, токены и инциденты в сети' },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]['id'];
@@ -44,32 +44,32 @@ interface ToolDef {
 }
 
 const TABS: ToolDef[] = [
-  { id: 'scanner', label: 'PORT SCAN', icon: Radar, placeholder: 'IP or hostname', color: '#00E5FF', group: 'network', blurb: 'Open ports and running services' },
-  { id: 'vuln', label: 'VULN SWEEP', icon: Bug, placeholder: 'IP or hostname', color: '#FF3D3D', group: 'network', blurb: 'Known CVEs affecting the host' },
-  { id: 'shodan', label: 'SHODAN IOT', icon: Network, placeholder: 'IP address', color: '#FF3D3D', group: 'network', blurb: 'Internet-exposed device record' },
-  { id: 'bgp', label: 'BGP ROUTE', icon: Globe, placeholder: 'IP or ASN', color: '#00E5FF', group: 'network', blurb: 'Autonomous system and prefixes' },
-  { id: 'mac', label: 'MAC ADDR', icon: Fingerprint, placeholder: 'MAC address', color: '#FFD700', group: 'network', blurb: 'Hardware vendor lookup' },
-  { id: 'sweep', label: 'IP SWEEP', icon: Crosshair, placeholder: 'Enter IP address (e.g. 8.8.8.8)', color: '#FF3D3D', group: 'network', blurb: 'Scan an entire subnet' },
+  { id: 'scanner', label: 'СКАН ПОРТОВ', icon: Radar, placeholder: 'IP или имя хоста', color: '#00E5FF', group: 'network', blurb: 'Открытые порты и запущенные сервисы' },
+  { id: 'vuln', label: 'ПОИСК УЯЗВИМОСТЕЙ', icon: Bug, placeholder: 'IP или имя хоста', color: '#FF3D3D', group: 'network', blurb: 'Известные CVE, влияющие на хост' },
+  { id: 'shodan', label: 'SHODAN IOT', icon: Network, placeholder: 'IP-адрес', color: '#FF3D3D', group: 'network', blurb: 'Запись об устройстве в интернете' },
+  { id: 'bgp', label: 'BGP МАРШРУТ', icon: Globe, placeholder: 'IP или ASN', color: '#00E5FF', group: 'network', blurb: 'Автономная система и префиксы' },
+  { id: 'mac', label: 'MAC-АДРЕС', icon: Fingerprint, placeholder: 'MAC-адрес', color: '#FFD700', group: 'network', blurb: 'Поиск производителя оборудования' },
+  { id: 'sweep', label: 'ОПРОС СЕТИ (IP)', icon: Crosshair, placeholder: 'Введите IP-адрес (напр. 8.8.8.8)', color: '#FF3D3D', group: 'network', blurb: 'Сканирование всей подсети' },
 
-  { id: 'dns', label: 'DNS', icon: Server, placeholder: 'Domain name', color: '#448AFF', group: 'domain', blurb: 'All record types' },
-  { id: 'whois', label: 'WHOIS', icon: FileText, placeholder: 'Domain name', color: '#FFD700', group: 'domain', blurb: 'Registrar and ownership' },
-  { id: 'certs', label: 'CERTS', icon: Lock, placeholder: 'Domain name', color: '#E040FB', group: 'domain', blurb: 'Certificate transparency log' },
-  { id: 'ssl', label: 'SSL/TLS', icon: Shield, placeholder: 'Domain name', color: '#76FF03', group: 'domain', blurb: 'Cipher and certificate health' },
-  { id: 'subdomains', label: 'SUBDOMAINS', icon: Layers, placeholder: 'Domain to enumerate', color: '#00BCD4', group: 'domain', blurb: 'Enumerate attack surface' },
-  { id: 'headers', label: 'HEADERS', icon: Code, placeholder: 'URL to inspect', color: '#87CEEB', group: 'domain', blurb: 'Security headers audit' },
-  { id: 'tech', label: 'TECH DETECT', icon: Code, placeholder: 'URL to fingerprint', color: '#9C27B0', group: 'domain', blurb: 'Frameworks and stack' },
+  { id: 'dns', label: 'DNS', icon: Server, placeholder: 'Имя домена', color: '#448AFF', group: 'domain', blurb: 'Все типы записей' },
+  { id: 'whois', label: 'WHOIS', icon: FileText, placeholder: 'Имя домена', color: '#FFD700', group: 'domain', blurb: 'Регистратор и владелец' },
+  { id: 'certs', label: 'СЕРТИФИКАТЫ', icon: Lock, placeholder: 'Имя домена', color: '#E040FB', group: 'domain', blurb: 'Журнал прозрачности сертификатов' },
+  { id: 'ssl', label: 'SSL/TLS', icon: Shield, placeholder: 'Имя домена', color: '#76FF03', group: 'domain', blurb: 'Шифры и состояние сертификата' },
+  { id: 'subdomains', label: 'ПОДДОМЕНЫ', icon: Layers, placeholder: 'Домен для перечисления', color: '#00BCD4', group: 'domain', blurb: 'Перечисление поверхности атаки' },
+  { id: 'headers', label: 'ЗАГОЛОВКИ', icon: Code, placeholder: 'URL для проверки', color: '#87CEEB', group: 'domain', blurb: 'Аудит защитных заголовков' },
+  { id: 'tech', label: 'ТЕХНОЛОГИИ', icon: Code, placeholder: 'URL для фингерпринта', color: '#9C27B0', group: 'domain', blurb: 'Фреймворки и стек' },
 
-  { id: 'username', label: 'USERNAME', icon: User, placeholder: 'Username / handle to hunt', color: '#00E676', group: 'identity', blurb: 'Hunt a handle across platforms' },
-  { id: 'github', label: 'GITHUB RECON', icon: Terminal, placeholder: 'GitHub username', color: '#87CEEB', group: 'identity', blurb: 'Profile, repos and contacts' },
-  { id: 'phone', label: 'PHONE INTEL', icon: Phone, placeholder: 'Phone number (e.g. +1...)', color: '#FF9500', group: 'identity', blurb: 'Carrier, region and line type' },
-  { id: 'fingerprint', label: 'FINGERPRINT', icon: Fingerprint, placeholder: 'Username, email or phone', color: '#3B82F6', group: 'identity', blurb: 'Public profile search, streamed live' },
+  { id: 'username', label: 'НИКНЕЙМ', icon: User, placeholder: 'Имя пользователя / ник для поиска', color: '#00E676', group: 'identity', blurb: 'Поиск ника по платформам' },
+  { id: 'github', label: 'РАЗВЕДКА GITHUB', icon: Terminal, placeholder: 'Имя пользователя GitHub', color: '#87CEEB', group: 'identity', blurb: 'Профиль, репозитории и контакты' },
+  { id: 'phone', label: 'РАЗВЕДКА ПО НОМЕРУ', icon: Phone, placeholder: 'Номер телефона (напр. +1...)', color: '#FF9500', group: 'identity', blurb: 'Оператор, регион и тип линии' },
+  { id: 'fingerprint', label: 'ФИНГЕРПРИНТ', icon: Fingerprint, placeholder: 'Ник, email или телефон', color: '#3B82F6', group: 'identity', blurb: 'Поиск публичных профилей в реальном времени' },
 
-  { id: 'threats', label: 'THREATS', icon: AlertTriangle, placeholder: 'IP, domain, or hash', color: '#FF9500', group: 'threat', blurb: 'Reputation across feeds' },
-  { id: 'leaks', label: 'DATA LEAKS', icon: ShieldAlert, placeholder: 'Email address', color: '#E040FB', group: 'threat', blurb: 'Breach exposure for an address' },
+  { id: 'threats', label: 'УГРОЗЫ', icon: AlertTriangle, placeholder: 'IP, домен или хеш', color: '#FF9500', group: 'threat', blurb: 'Репутация по нескольким базам' },
+  { id: 'leaks', label: 'УТЕЧКИ ДАННЫХ', icon: ShieldAlert, placeholder: 'Email-адрес', color: '#E040FB', group: 'threat', blurb: 'Присутствие адреса в утечках' },
 
-  { id: 'crypto', label: 'CHAIN INTEL', icon: Bitcoin, placeholder: 'BTC, ETH or SOL wallet address', color: '#F7931A', group: 'chain', blurb: 'Wallet forensics and daily brief' },
+  { id: 'crypto', label: 'ЦЕПОЧКА (CHAIN)', icon: Bitcoin, placeholder: 'Адрес кошелька BTC, ETH или SOL', color: '#F7931A', group: 'chain', blurb: 'Форензика кошелька и ежедневный бриф' },
   // DigitalDon's own mark, kept monochrome by their brand rule.
-  { id: 'donbot', label: 'DONBOT', icon: DigitalDonMark, placeholder: 'Ticker, name or contract address', color: '#E8E6E0', group: 'chain', blurb: 'Token signal and holder clusters' },
+  { id: 'donbot', label: 'DONBOT', icon: DigitalDonMark, placeholder: 'Тикер, название или адрес контракта', color: '#E8E6E0', group: 'chain', blurb: 'Сигнал токена и кластеры держателей' },
 ];
 
 interface OsintPanelProps { isOpen?: boolean; onClose?: () => void; isMobile?: boolean; onSweepVisualize?: (data: any) => void; onScanGeolocate?: (target: string, data: any) => void; }
@@ -156,7 +156,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       setError('');
       fetch('/api/geo')
         .then(r => {
-          if (!r.ok) throw new Error(`Server returned ${r.status}`);
+          if (!r.ok) throw new Error(`Сервер вернул ${r.status}`);
           return r.json();
         })
         .then(geo => {
@@ -195,7 +195,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       try {
         const t0 = Date.now();
         const res = await fetch(`/api/osint/sweep?ip=${encodeURIComponent(query)}&cidr=${cidr}`);
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Sweep failed (${res.status})`); }
+        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Опрос сети не выполнен (${res.status})`); }
         const initData = await res.json();
 
         const ipParts = initData.target_ip.split('.').map(Number) as [number, number, number, number];
@@ -335,9 +335,9 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
             .catch(() => {});
         }
       } else {
-        setError(data.error || 'Lookup failed');
+        setError(data.error || 'Запрос не выполнен');
       }
-    } catch { setError('Network error'); }
+    } catch { setError('Сетевая ошибка'); }
     finally { setLoading(false); }
   }, [query, activeTab, scanType, loading, sweepCidr]);
 
@@ -665,10 +665,10 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
 
           <div className="grid grid-cols-4 gap-1.5 mb-2">
             {[
-              { label: 'FOUND', value: r.found?.length ?? 0, color: ACCENT },
-              { label: 'UNSURE', value: r.inconclusive?.length ?? 0, color: '#FF9500' },
-              { label: 'BLOCKED', value: r.blocked?.length ?? 0, color: '#E040FB' },
-              { label: 'CHECKED', value: r.checked ?? 0, color: '#87CEEB' },
+              { label: 'НАЙДЕНО', value: r.found?.length ?? 0, color: ACCENT },
+              { label: 'НЕОДНОЗНАЧНО', value: r.inconclusive?.length ?? 0, color: '#FF9500' },
+              { label: 'ЗАБЛОКИРОВАНО', value: r.blocked?.length ?? 0, color: '#E040FB' },
+              { label: 'ПРОВЕРЕНО', value: r.checked ?? 0, color: '#87CEEB' },
             ].map((c: any) => (
               <div key={c.label} className="rounded border px-2 py-1.5" style={{ borderColor: `${c.color}33`, background: `${c.color}0d` }}>
                 <div className="text-[9px] font-mono text-[var(--text-muted)]">{c.label}</div>
@@ -1285,7 +1285,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         {activeTab === 'scanner' && (
           <select value={scanType} onChange={e => setScanType(e.target.value)}
             className="bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] rounded-lg px-2 py-1.5 text-[11px] font-mono text-[var(--text-muted)] outline-none w-full">
-            <option value="quick">QUICK SCAN</option><option value="deep">ГЛУБОКОЕ СКАНИРОВАНИЕ</option><option value="ports">TOP 1000 PORTS</option>
+            <option value="quick">БЫСТРОЕ СКАНИРОВАНИЕ</option><option value="deep">ГЛУБОКОЕ СКАНИРОВАНИЕ</option><option value="ports">ТОП-1000 ПОРТОВ</option>
           </select>
         )}
         {activeTab === 'sweep' && (

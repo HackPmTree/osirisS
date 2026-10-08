@@ -127,14 +127,14 @@ export default function ArcGISPanel({
         const res = await fetch(`/api/arcgis?${params.toString()}`);
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || `Search failed (${res.status})`);
+          throw new Error(err.error || `Поиск не выполнен (${res.status})`);
         }
 
         const data = await res.json();
         setResults(data.results || []);
         setResultsFor(searchQuery);
       } catch (err: any) {
-        setError(err.message || 'Search failed');
+        setError(err.message || 'Поиск не выполнен');
       } finally {
         setSearching(false);
       }
@@ -155,7 +155,7 @@ export default function ArcGISPanel({
         const res = await fetch(`/api/arcgis?${params.toString()}`);
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || `Import failed (${res.status})`);
+          throw new Error(err.error || `Импорт не выполнен (${res.status})`);
         }
 
         const geojson = await res.json();
@@ -169,7 +169,7 @@ export default function ArcGISPanel({
         const availableColor = LAYER_COLORS.find(c => !usedColors.includes(c)) || LAYER_COLORS[importedLayers.length % LAYER_COLORS.length];
         onImportLayer({ id: result.id, title: result.title, url: result.url, geojson, color: availableColor, opacity: 0.8 });
       } catch (err: any) {
-        setError(err.message || 'Import failed');
+        setError(err.message || 'Импорт не выполнен');
       } finally {
         setImportingId(null);
       }
@@ -256,7 +256,7 @@ export default function ArcGISPanel({
                       <button
                         onClick={() => onUpdateLayer(layer.id, { visible: !layer.visible })}
                         className="flex-shrink-0 p-0.5 rounded hover:bg-white/10 transition-colors"
-                        title={layer.visible ? 'Hide layer' : 'Show layer'}
+                        title={layer.visible ? 'Скрыть слой' : 'Показать слой'}
                       >
                         {layer.visible ? (
                           <Eye className="w-3 h-3 text-white/70" />

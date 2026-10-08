@@ -48,7 +48,7 @@ function step(mode: DrawMode, vertices: number): string {
     case 'circle': return 'Now click to set the radius';
     case 'polygon':
       return vertices < 3
-        ? `Keep clicking corners — ${3 - vertices} more needed`
+        ? `Кликайте по углам — осталось ${3 - vertices}`
         : 'Click more corners, or finish the area';
     case 'line':
       return vertices < 2 ? 'Click the next waypoint' : 'Click more waypoints, or finish the path';

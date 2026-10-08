@@ -369,7 +369,7 @@ function PlaceInput({
 
   // What the list offers: where you are (when tracked), then what was typed for, or recent places while the field is empty.
   const empty = value.trim().length < 2;
-  const you: Place[] = liveFix ? [{ label: 'Your location', lat: liveFix.lat, lng: liveFix.lng, kind: 'current', context: 'Live position' }] : [];
+  const you: Place[] = liveFix ? [{ label: 'Ваше местоположение', lat: liveFix.lat, lng: liveFix.lng, kind: 'current', context: 'Живая позиция' }] : [];
   const options: Array<Place & { recent?: boolean }> = [...you, ...(empty ? recent.map(r => ({ ...r, recent: true })) : results)];
   const at = Math.min(idx, Math.max(0, options.length - 1));
   const center = biasLat !== undefined && biasLng !== undefined ? { lat: biasLat, lng: biasLng } : null;
@@ -590,7 +590,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
 
     if (browser) {
       const { latitude, longitude } = browser.coords;
-      apply(latitude, longitude, 'My location');
+      apply(latitude, longitude, 'Моё местоположение');
       setLocating(false);
       return;
     }
@@ -599,7 +599,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
       const res = await fetch('/api/geo');
       const d = await res.json();
       if (d?.lat && d?.lon) {
-        apply(d.lat, d.lon, d.city ? `Near ${d.city}` : 'Approximate location');
+        apply(d.lat, d.lon, d.city ? `Рядом: ${d.city}` : 'Приблизительное местоположение');
         setLocateError('Approximate — from network location');
       } else {
         setLocateError('Could not determine your location');
@@ -701,7 +701,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
           <Crosshair className={`w-4 h-4 ${tracking ? 'animate-pulse' : ''}`} />
         </IconBtn>
         {tracking && (
-          <IconBtn label={follow ? 'Stop following' : 'Keep the map centred on me'} on={follow}
+          <IconBtn label={follow ? 'Прекратить слежение' : 'Держать карту на мне'} on={follow}
             onClick={() => { const n = !follow; setFollow(n); onFollowChange?.(n); }}>
             <LocateFixed className="w-4 h-4" />
           </IconBtn>
@@ -725,7 +725,7 @@ export default function DirectionsBar({ onRoute, onLocate, onClose, center = nul
                 value={v.text}
                 onChange={(t) => setVias((prev) => prev.map((x, j) => (j === i ? { ...x, text: t } : x)))}
                 onPick={(p) => pickVia(i, p)}
-                placeholder={`Stop ${i + 1}`} {...bias} liveFix={live} recent={recent}
+                placeholder={`Точка ${i + 1}`} {...bias} liveFix={live} recent={recent}
                 trailing={(
                   <button type="button" onClick={() => removeVia(i)} aria-label={`Remove stop ${i + 1}`}
                     className="w-8 h-8 mr-0.5 rounded-md flex items-center justify-center flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--alert-red)] hover:bg-[rgba(255,61,61,0.08)] transition-colors">

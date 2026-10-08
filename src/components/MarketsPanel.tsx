@@ -190,7 +190,7 @@ function SecurityTable({ groups, selected, watchlist, sort, onSort, onOpen, onSt
                   <td className="text-center px-2 hidden @2xl:table-cell">
                     <RangeBar
                       pos={rangePosition(q.price, q.day_low, q.day_high)}
-                      title={q.day_low != null && q.day_high != null ? `Day ${formatPrice(q, q.day_low)} – ${formatPrice(q, q.day_high)}` : 'No day range'}
+                      title={q.day_low != null && q.day_high != null ? `Day ${formatPrice(q, q.day_low)} – ${formatPrice(q, q.day_high)}` : 'Нет диапазона за день'}
                     />
                   </td>
                   <td className="text-center px-2 hidden @3xl:table-cell">
@@ -372,7 +372,7 @@ export default function MarketsPanel({ data, spaceWeather }: MarketsPanelProps) 
             else if (e.key === 'ArrowUp' && suggestions.length) { e.preventDefault(); setPick(p => (p <= 0 ? suggestions.length - 1 : p - 1)); }
             else if (e.key === 'Escape' && command) { e.preventDefault(); setCommand(''); setPick(-1); }
           }}
-          placeholder={miss ? `No match for ${miss}` : 'Ticker or function · LMT · gold · FX · help'}
+          placeholder={miss ? `Нет совпадений для ${miss}` : 'Ticker or function · LMT · gold · FX · help'}
           aria-label="Markets command: a ticker or function code"
           aria-autocomplete="list"
           autoComplete="off"
@@ -448,7 +448,7 @@ export default function MarketsPanel({ data, spaceWeather }: MarketsPanelProps) 
             key={symbol}
             onClick={() => q && open(q)}
             disabled={!q}
-            title={q ? `${longName(q)} — chart it` : `${label} — no reading`}
+            title={q ? `${longName(q)} — chart it` : `${label} — нет данных`}
             className={`min-w-0 px-2 py-1.5 rounded-md border text-left font-mono transition-colors disabled:opacity-40 ${
               active ? 'border-[var(--border-active)] bg-[var(--hover-accent)]' : 'border-[var(--border-secondary)] bg-white/[0.02] hover:bg-[var(--hover-accent)]'
             }`}
@@ -599,7 +599,7 @@ export default function MarketsPanel({ data, spaceWeather }: MarketsPanelProps) 
         <span className="truncate">
           SPACE WX{' '}
           <span style={{ color: spaceWeather.storm_color || T.text }}>
-            {spaceWeather.kp_index == null ? 'no reading' : `Kp ${spaceWeather.kp_index} — ${spaceWeather.storm_level}`}
+            {spaceWeather.kp_index == null ? 'нет данных' : `Kp ${spaceWeather.kp_index} — ${spaceWeather.storm_level}`}
           </span>
           {spaceWeather.solar_flares?.length > 0 && <> · flare {spaceWeather.solar_flares[0].class}</>}
         </span>

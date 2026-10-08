@@ -56,7 +56,7 @@ function ChainBriefInner() {
     try {
       const res = await fetch(`/api/chain/daily?days=${d}${force ? '&refresh=1' : ''}`, { cache: 'no-store' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Brief unavailable');
+      if (!res.ok) throw new Error(data.error || 'Бриф недоступен');
       setBrief(data);
       setLastRefresh(new Date());
     } catch (e: any) {

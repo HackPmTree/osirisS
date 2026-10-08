@@ -220,7 +220,7 @@ function Row({ flight, telem, onRemove, onLocate, onDetail }: {
         ) : (
           <>
             <div className="text-[11px] text-[var(--text-primary)] leading-snug">
-              {detail?.model || 'Unidentified type'}
+              {detail?.model || 'Тип не определён'}
             </div>
             <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-0.5 text-[9px] text-[var(--text-muted)]">
               {detail?.registration && <span className="tabular-nums">{detail.registration}</span>}

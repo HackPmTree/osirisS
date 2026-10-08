@@ -23,6 +23,25 @@ interface Entry<T> {
 
 const store = new Map<string, Entry<unknown>>();
 
+/**
+ * Умолчания по шуму в консоли (задача: убрать спам «fetch failed»).
+ *
+ * Ключи вида `texas:ABL`, `texas:DAL`, … при недоступном upstream
+ * (its.txdot.gov блокирует запросы изdatacenter-сетей / таймаут) порождали
+ * сотни предупреждений на каждый fan-out. Теперь об одном и том же
+ * отказавшем источнике сообщаем не чаще одного раза в окно подавления;
+ * повторные сбои молча обслуживаются stale-кэшем или пустым результатом.
+ */
+const FAILURE_QUIET_WINDOW_MS = 10 * 60_000; // 10 минут
+const lastFailureNoticeAt = new Map<string, number>();
+
+function shouldLogFailure(key: string, now: number): boolean {
+  const last = lastFailureNoticeAt.get(key);
+  if (last !== undefined && now - last < FAILURE_QUIET_WINDOW_MS) return false;
+  lastFailureNoticeAt.set(key, now);
+  return true;
+}
+
 export const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 /**
@@ -70,12 +89,17 @@ export function cachedSource<T>(
         return data;
       } catch (e) {
         if (entry?.data.length) {
-          console.warn(`[OSIRIS] ${key} refresh failed — serving ${entry.data.length} cached cameras`);
+          /* Подавление спама: одно предупреждение на источник за окно. */
+          if (shouldLogFailure(key, now)) {
+            console.warn(`[OSIRIS] ${key} refresh failed — serving ${entry.data.length} cached cameras`);
+          }
           // Retry sooner than a full TTL, but don't hammer the failing upstream.
           store.set(key, { data: entry.data, expiresAt: now + 60_000, inflight: null });
           return entry.data;
         }
-        console.warn(`[OSIRIS] ${key} fetch failed with no cache to fall back on:`, e);
+        if (shouldLogFailure(key, now)) {
+          console.warn(`[OSIRIS] ${key} fetch failed with no cache to fall back on:`, e);
+        }
         store.set(key, { data: [], expiresAt: now + 60_000, inflight: null });
         return [];
       }

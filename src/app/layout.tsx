@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import "./globals.css";
 
@@ -200,6 +201,16 @@ export default function RootLayout({
         <ErrorBoundary name="OSIRIS Core">
           {children}
         </ErrorBoundary>
+
+        {/* Яндекс Карты API 2.1 — загружается после интерактивности страницы.
+            Ключ берётся из NEXT_PUBLIC_YANDEX_MAPS_API_KEY (.env.local).
+            Без ключа скрипт вернёт ошибку авторизации; компонент карты
+            (YandexMapComponent) корректно покажет русскоязычное сообщение. */}
+        <Script
+          id="yandex-maps-api"
+          src={`https://api-maps.yandex.ru/2.1/?apikey=${process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || ''}&lang=ru_RU`}
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

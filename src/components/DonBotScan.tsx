@@ -119,7 +119,7 @@ export default function DonBotScan({ initial = null, onScan }: {
               ) : (
                 <span className="text-[var(--text-muted)] flex items-center gap-1.5">
                   {!loaded && <Loader2 className="w-3 h-3 animate-spin" />}
-                  {loaded ? `Analysing “${query}”…` : 'Loading DonBot…'}
+                  {loaded ? `Анализ «${query}»…` : 'Загрузка DonBot…'}
                 </span>
               )}
             </div>

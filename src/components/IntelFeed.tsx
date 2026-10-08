@@ -114,7 +114,7 @@ export default function IntelFeed({ data, onLocate }: IntelFeedProps) {
                             onLocate?.(item.coords[0], item.coords[1]);
                           }}
                           className="text-[var(--text-muted)] hover:text-[var(--cyan-primary)] transition-colors"
-                          title={item.coords_anchor ? `Approximate: centroid for "${item.coords_anchor}", not the event location` : 'Approximate location'}
+                          title={item.coords_anchor ? `Приблизительно: центроид для «${item.coords_anchor}», не место события` : 'Приблизительное местоположение'}
                         >
                           <MapPin className="w-2.5 h-2.5" />
                         </button>
