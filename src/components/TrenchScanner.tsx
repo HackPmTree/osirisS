@@ -133,9 +133,23 @@ export default function TrenchScanner({
         return;
       }
       const feats: TrenchRow[] = j?.geojson?.features ?? [];
-      const rejected = (j?.scanned ?? lineShapes.length) - feats.length;
-      setScanResult(`Подтверждено окопов: ${feats.length}. Отбраковано (дороги/ЛЭП): ${Math.max(0, rejected)}. Сохранено в слой укреплений.`);
-      setStatus({ kind: 'ok', text: 'Готово — окопы добавлены на карту.' });
+      const allResults: any[] = j?.features ?? [];
+      const rejected = allResults.filter((r: any) => !r.is_trench).length;
+      
+      // Формируем развёрнутый отчёт с причинами отклонения
+      let report = `Подтверждено окопов: ${feats.length}.`;
+      if (rejected > 0) {
+        const rejectedReasons = allResults
+          .filter((r: any) => !r.is_trench)
+          .map((r: any) => r.reasons_ru?.[0] || 'неизвестная причина')
+          .slice(0, 3)
+          .join('; ');
+        report += `\nОтбраковано (${rejected}): ${rejectedReasons}${rejected > 3 ? '…' : ''}`;
+      }
+      report += '\nСохранено в слой укреплений.';
+      
+      setScanResult(report);
+      setStatus({ kind: 'ok', text: feats.length > 0 ? 'Готово — окопы добавлены на карту.' : 'Проверка завершена. Ни один обвод не похож на окоп.' });
       await refresh();
       onSaved?.();
     } catch {
@@ -165,10 +179,20 @@ export default function TrenchScanner({
         return;
       }
       const n = Array.isArray(j?.geojson?.features) ? j.geojson.features.length : 0;
-      setScanResult(
-        `Кандидатов-окопов подтверждено: ${n}. Движок: ${j?.engine === 'python-opencv' ? 'OpenCV (полный пайплайн)' : 'локальная эвристика (по геометрии линий)'}.`,
-      );
-      setStatus({ kind: 'ok', text: 'Сканирование завершено.' });
+      const scannedCount = j?.scanned_segments ?? j?.scanned ?? 0;
+      
+      let autoReport = `Обнаружено кандидатов: ${scannedCount}. Подтверждено окопов: ${n}.`;
+      if (j?.engine === 'python-opencv') {
+        autoReport += '\nДвижок: OpenCV (полный пайплайн — ширина, зигзаг, текстура).';
+      } else {
+        autoReport += '\nДвижок: локальная эвристика (только геометрия линий без анализа снимков).';
+        if (n === 0 && scannedCount > 0) {
+          autoReport += '\n⚠️ Все кандидаты отбракованы как "дороги/ЛЭП" (слишком прямые или широкие).';
+        }
+      }
+      
+      setScanResult(autoReport);
+      setStatus({ kind: 'ok', text: n > 0 ? 'Найдены укрепления!' : 'Сканирование завершено. Окопов не обнаружено.' });
       await refresh();
       onSaved?.();
     } catch {

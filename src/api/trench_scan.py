@@ -43,15 +43,16 @@ class TrenchConfig:
     trench_width_min_m: float = 1.5      # нижняя граница типовой ширины окопа
     trench_width_max_m: float = 4.5      # верхняя граница типовой ширины окопа
     road_width_min_m: float = 6.0        # всё шире — почти наверняка дорога
-    min_trench_length_m: float = 30.0    # короткие обрывки не рассматриваем
     straight_len_m: float = 150.0        # длинна, при которой прямолинейность значима
     max_turn_rad_straight: float = 0.12  # меньше этого угла излома — линия прямая
     zigzag_turn_rad: float = 0.35        # больше — уверенный зигзаг
-    texture_smooth_thresh: float = 0.06  # std нормализованных градиентов: гладкий асфальт
-    texture_rough_thresh: float = 0.15   # выше — взрыхлённая земля
+    texture_smooth_thresh: float = 0.02  # std нормализованных градиентов: гладкий асфальт
+    texture_rough_thresh: float = 0.15   # выше — уверенно взрыхлённая земля
     hough_threshold: int = 60
     hough_min_line_px: int = 25
     hough_max_line_gap_px: int = 6
+    min_trench_length_m: float = 30.0    # короткие обрывки не рассматриваем (после склейки)
+    max_valid_tortuosity: float = 4.0    # выше — это шум трассировки, а не зигзаг
     confidence_gate: float = 0.55        # порог отнесения к «окоп»
 
 
@@ -93,34 +94,55 @@ def classify_segment(m: SegmentMetrics, cfg: TrenchConfig) -> Tuple[bool, float,
     reasons: List[str] = []
     score = 1.0
 
+    # ── Жёсткие отсекающие правила ПЕРВЫМИ: физически невозможная форма,
+    #    «дорожная» ширина, гладкий асфальт. Затем — мягкие модификаторы.
+    hard_reject = False
+
+    if m.tortuosity > cfg.max_valid_tortuosity:
+        reasons.append(f"Извилистость {m.tortuosity:.1f} физически невозможна — шум трассировки, отбраковка")
+        score -= 0.85
+        hard_reject = True
+
     # Шаг 2: фильтр ширины
     if m.width_m >= cfg.road_width_min_m or m.parallel_borders_wide:
         extra = " с параллельными границами большой ширины" if m.parallel_borders_wide else ""
         reasons.append(f"Ширина {m.width_m:.1f} м{extra} — это дорога, исключаем")
-        score -= 0.9  # жёсткое отсекающее правило
+        score -= 0.9
+        hard_reject = True
     elif cfg.trench_width_min_m <= m.width_m <= cfg.trench_width_max_m:
         reasons.append("Ширина в типовом диапазоне окопа (2–4 м)")
+        if not hard_reject:
+            score += 0.15  # единственный честный положительный признак ширины
     else:
         reasons.append(f"Ширина {m.width_m:.1f} м нетипична для окопа")
         score -= 0.45
 
     # Шаг 3: фильтр формы (зигзаг против прямой)
-    if (m.length_m > cfg.straight_len_m
-            and m.tortuosity < 1.08
-            and m.max_turn_rad < cfg.max_turn_rad_straight):
-        reasons.append("Длинная идеальная прямая без изломов — вероятнее дорога или ЛЭП")
-        score -= 0.7
-    elif m.max_turn_rad > cfg.zigzag_turn_rad or m.tortuosity > 1.15:
-        reasons.append("Обнаружены изломы/зигзаги — признак фортификационной линии")
-        score += 0.1
+    if not hard_reject:
+        if (m.length_m > cfg.straight_len_m
+                and m.tortuosity < 1.08
+                and m.max_turn_rad < cfg.max_turn_rad_straight):
+            reasons.append("Длинная идеальная прямая без изломов — вероятнее дорога или ЛЭП")
+            score -= 0.7
+            hard_reject = True
+        elif m.max_turn_rad > cfg.zigzag_turn_rad or m.tortuosity > 1.15:
+            reasons.append("Есть изломы/зигзаги — признак фортификационной линии")
+            score += 0.1
+        else:
+            reasons.append("Форма не подтверждает окоп: нет ни изломов, ни выраженной кривизны")
+            score -= 0.65
 
     # Шаг 4: анализ текстуры
     if m.texture_std < cfg.texture_smooth_thresh:
         reasons.append("Гладкая текстура полосы — кандидат: асфальтированная дорога")
         score -= 0.5
+        hard_reject = True
     elif m.texture_std > cfg.texture_rough_thresh:
         reasons.append("Шумная (взрыхлённая) текстура грунта — соответствует окопу")
         score += 0.1
+    else:
+        reasons.append("Текстура не показывает взрыхлённого грунта вокруг линии")
+        score -= 0.2
 
     if m.length_m < cfg.min_trench_length_m:
         reasons.append("Сегмент слишком короткий — недостаточно данных")
@@ -183,11 +205,8 @@ def measure_band_texture(gray, p0, p1, gsd_m: float, cfg: TrenchConfig):
     return width_m, texture_std, parallel_wide
 
 
-def detect_segments(img, gsd_m: float, cfg: TrenchConfig, bbox) -> List[TrenchCandidate]:
-    """Шаг 1: Canny + HoughLinesP; затем метрики и классификация каждого сегмента."""
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (3, 3), 0)
-    edges = cv2.Canny(gray, 50, 150)
+def _hough_segments(edges, cfg: TrenchConfig):
+    """Совместимость с OpenCV 4.x/5.x: HoughLinesP возвращает (N,1,4) или (N,4)."""
     lines = cv2.HoughLinesP(
         edges,
         rho=1, theta=math.pi / 180,
@@ -195,52 +214,213 @@ def detect_segments(img, gsd_m: float, cfg: TrenchConfig, bbox) -> List[TrenchCa
         minLineLength=cfg.hough_min_line_px,
         maxLineGap=cfg.hough_max_line_gap_px,
     )
-    candidates: List[TrenchCandidate] = []
     if lines is None:
-        return candidates
+        return []
+    out = []
+    for ln in lines:
+        flat = np.asarray(ln).reshape(-1)
+        if flat.size == 4:
+            out.append(tuple(int(v) for v in flat[:4]))
+    return out
+
+
+def trace_polyline(gray, edges, p0, p1, gsd_m: float, cfg: TrenchConfig):
+    """
+    Превратить прямой отрезок Хафа в РЕАЛЬНУЮ ломаную трассу структуры.
+
+    Идея: траншея тёмная и непрерывная — идём от начала к концу маленькими
+    шагами, на каждом шаге выбираем следующую точку внутри локального окна
+    так, чтобы яркость пикселя была минимальной (следование за тёмной полосой),
+    с ограничением угла поворота (чтобы не спрыгнуть на соседнюю структуру).
+    Результат — цепочка вершин; изломы этой цепочки и есть «зигзаг» окопа.
+    Для идеально прямой дороги цепочка остаётся прямой → фильтр формы её
+    корректно отсекает.
+    """
+    h, w = gray.shape
+    x0, y0 = float(p0[0]), float(p0[1])
+    x1, y1 = float(p1[0]), float(p1[1])
+    seg_len = math.hypot(x1 - x0, y1 - y0)
+    if seg_len < 8:
+        return [(x0, y0), (x1, y1)]
+    step = max(3.0, seg_len / 60.0)          # ~60 шагов вдоль трассы
+    win = max(4, int(round(1.5 * cfg.trench_width_max_m / max(gsd_m, 0.05))))  # окно поиска ±~7 м
+    n_steps = max(2, int(seg_len / step))
+
+    pts = [(x0, y0)]
+    direction = math.atan2(y1 - y0, x1 - x0)
+    cx, cy = x0, y0
+    for i in range(1, n_steps + 1):
+        tx = x0 + (x1 - x0) * i / n_steps     # целевая точка прямого отрезка
+        ty = y0 + (y1 - y0) * i / n_steps
+        best_val, bx, by = None, tx, ty
+        ix0, iy0 = int(tx), int(ty)
+        for dy in range(-win, win + 1):
+            for dx in range(-win, win + 1):
+                px, py = ix0 + dx, iy0 + dy
+                if not (0 <= px < w and 0 <= py < h):
+                    continue
+                ang = math.atan2(py - cy, px - cx)
+                diff = abs((ang - direction + math.pi) % (2 * math.pi) - math.pi)
+                if diff > 1.0:                 # запрет резких разворотов (>~57°)
+                    continue
+                val = float(gray[py, px])
+                if best_val is None or val < best_val:
+                    best_val, bx, by = val, px, py
+        new_dir = math.atan2(by - cy, bx - cx)
+        # сглаживание направления (экспоненциальное), чтобы трасса не дрожала
+        sin_d = 0.6 * math.sin(direction) + 0.4 * math.sin(new_dir)
+        cos_d = 0.6 * math.cos(direction) + 0.4 * math.cos(new_dir)
+        direction = math.atan2(sin_d, cos_d)
+        cx, cy = float(bx), float(by)
+        pts.append((cx, cy))
+
+    # Упрощение цепочки: оставляем только значимые изломы (Douglas-Peucker)
+    def rdp(points, eps):
+        if len(points) < 3:
+            return points
+        (ax, ay), (bx_, by_) = points[0], points[-1]
+        dx, dy = bx_ - ax, by_ - ay
+        seg = math.hypot(dx, dy) or 1.0
+        dmax, imax = 0.0, 0
+        for k in range(1, len(points) - 1):
+            d = abs(dy * points[k][0] - dx * points[k][1] + bx_ * ay - by_ * ax) / seg
+            if d > dmax:
+                dmax, imax = d, k
+        if dmax > eps:
+            return rdp(points[:imax + 1], eps)[:-1] + rdp(points[imax:], eps)
+        return [points[0], points[-1]]
+
+    return rdp(pts, max(1.5, 1.0 / max(gsd_m, 0.05)))  # эпсилон ~1 м
+
+
+def polyline_metrics(coords_px, gray, gsd_m: float, cfg: TrenchConfig) -> SegmentMetrics:
+    """
+    Метрики реального ломаного следа: длина, ширина, изломы, извилистость,
+    текстура. Вход — цепочка точек [(x, y), ...] в пиксельных координатах.
+    """
+    px = [(float(p[0]), float(p[1])) for p in coords_px]
+    lengths = [math.hypot(px[i + 1][0] - px[i][0], px[i + 1][1] - px[i][1])
+               for i in range(len(px) - 1)]
+    length_m = sum(lengths) * gsd_m
+    end2end = math.hypot(px[-1][0] - px[0][0], px[-1][1] - px[0][1]) * gsd_m
+    tortuosity = max(1.0, length_m / end2end) if end2end > 1 else 1.0
+    max_turn = 0.0
+    for i in range(1, len(px) - 1):
+        a1 = math.atan2(px[i][1] - px[i - 1][1], px[i][0] - px[i - 1][0])
+        a2 = math.atan2(px[i + 1][1] - px[i][1], px[i + 1][0] - px[i][0])
+        d = abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi)
+        max_turn = max(max_turn, d)
+    widths, textures, wide_hits = [], [], 0
+    for (xa, ya), (xb, yb) in zip(px, px[1:]):
+        wm, tex, wide = measure_band_texture(gray, (int(xa), int(ya)), (int(xb), int(yb)), gsd_m, cfg)
+        if wm > 0:
+            widths.append(wm); textures.append(tex); wide_hits += 1 if wide else 0
+    return SegmentMetrics(
+        length_m=length_m,
+        width_m=float(np.median(widths)) if widths else 0.0,
+        max_turn_rad=max_turn,
+        tortuosity=tortuosity,
+        texture_std=float(np.mean(textures)) if textures else 0.0,
+        parallel_borders_wide=(wide_hits >= 0.7 * len(widths)) if widths else False,
+    )
+
+
+def merge_traces(traces):
+    """
+    Склейка соосных отрезков Хафа в единые трассы.
+
+    HoughLinesP всегда рвёт длинную структуру на короткие осколки — без склейки
+    реальный окоп (200+ м) разваливается на сегменты по 15 м и гарантированно
+    отсеивается фильтром минимальной длины. Склейка жадная: следующий отрезок
+    присоединяется к цепи, если его конец попадает в окрестность конца цепи
+    (разрыв ≤ ~макс(12 px, 0.6·длины)) и направление совпадает (< ~35°).
+    """
+    if not traces:
+        return []
+    used = [False] * len(traces)
+    chains: List[List[Tuple[float, float]]] = []
+
+    for i in range(len(traces)):
+        if used[i]:
+            continue
+        used[i] = True
+        chain = list(traces[i])
+        grew = True
+        while grew:
+            grew = False
+            for j in range(len(traces)):
+                if used[j]:
+                    continue
+                t = traces[j]
+                a, b = t[0], t[-1]
+                dxv, dyv = b[0] - a[0], b[1] - a[1]
+                ln = math.hypot(dxv, dyv) or 1.0
+                ang_j = math.atan2(dyv, dxv)
+                # (конец цепи, кандидат-стык, нужен ли разворот отрезка)
+                for end_i, cand, rev in ((1, a, False), (1, b, True), (0, a, True), (0, b, False)):
+                    p = chain[-1] if end_i == 1 else chain[0]
+                    gap = math.hypot(cand[0] - p[0], cand[1] - p[1])
+                    if gap > max(12.0, ln * 0.6):
+                        continue
+                    q = chain[-2] if end_i == 1 else chain[1]
+                    cdx, cdy = p[0] - q[0], p[1] - q[1]
+                    diff = abs((ang_j - math.atan2(cdy, cdx) + math.pi) % (2 * math.pi) - math.pi)
+                    if min(diff, math.pi - diff) > math.radians(35):
+                        continue
+                    piece = t[::-1] if rev else t
+                    if end_i == 1:
+                        chain.extend(piece[1:] if piece[0] != p else piece)
+                    else:
+                        chain = (piece[:-1] if piece[-1] != p else piece) + chain
+                    used[j] = True
+                    grew = True
+                    break
+                if grew:
+                    break
+        chains.append(chain)
+    return chains
+
+
+def detect_segments(img, gsd_m: float, cfg: TrenchConfig,
+                    bbox: Tuple[float, float, float, float]) -> List["TrenchCandidate"]:
+    """
+    Шаг 1 пайплайна: детекция линейных структур на снимке.
+
+    Canny → HoughLinesP → трассировка ломаной каждого отрезка → СКЛЕЙКА
+    соосных осколков в единые трассы (иначе реальный окоп рассыпается на
+    15-метровые фрагменты и бракуется по длине) → метрики ширины/формы/
+    текстуры → строгий фильтр «окоп vs дорога» (classify_segment).
+    Пиксельные координаты переводятся в географические по bbox.
+    """
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Мягкое подавление солёного-перцевого шума без размывания траншей
+    gray = cv2.medianBlur(gray, 3)
+    edges = cv2.Canny(gray, 50, 140)
 
     min_lon, min_lat, max_lon, max_lat = bbox
-    lon_span, lat_span = max_lon - min_lon, max_lat - min_lat
-    h, w = img.shape[:2]
+    h, w = gray.shape
+    mppb_x = (max_lon - min_lon) / max(1, w)  # градусов на пиксель по X
+    mppb_y = (max_lat - min_lat) / max(1, h)  # градусов на пиксель по Y
 
-    def px_to_lonlat(x, y):
-        return (min_lon + lon_span * (x / w), max_lat - lat_span * (y / h))
+    def px_to_lonlat(px: float, py: float) -> Tuple[float, float]:
+        return (min_lon + px * mppb_x, max_lat - py * mppb_y)
 
-    for ln in lines:
-        x0, y0, x1, y1 = (int(v) for v in ln[0])
-        length_m = math.hypot(x1 - x0, y1 - y0) * gsd_m
-        width_m, texture_std, parallel_wide = measure_band_texture(gray, (x0, y0), (x1, y1), gsd_m, cfg)
+    raw_traces = []
+    for x0, y0, x1, y1 in _hough_segments(edges, cfg):
+        trace = trace_polyline(gray, edges, (x0, y0), (x1, y1), gsd_m, cfg)
+        if len(trace) >= 2:
+            raw_traces.append([(float(a), float(b)) for a, b in trace])
 
-        # HoughLinesP даёт прямые отрезки — «зигзаг» ищем по длине дуги
-        # рёбер в окрестности линии относительно её хорды (извилистая маска
-        # рёбер означает, что реальная структура ломаная, а не прямая трасса).
-        band = np.zeros_like(edges)
-        cv2.line(band, (x0, y0), (x1, y1), 255, thickness=max(2, int(width_m / gsd_m) or 2))
-        mask_edges = cv2.bitwise_and(edges, band)
-        ys, xs = np.nonzero(mask_edges)
-        arc_len = 0.0
-        if len(xs) > 2:
-            order = np.lexsort((ys, xs))
-            xs_s, ys_s = xs[order], ys[order]
-            arc_len = float(np.sum(np.hypot(np.diff(xs_s), np.diff(ys_s)))) * gsd_m
-        chord = length_m or 1.0
-        tortuosity = max(1.0, arc_len / chord) if arc_len else 1.0
-        max_turn = 0.4 if tortuosity > 1.15 else 0.0
-
-        metrics = SegmentMetrics(
-            length_m=length_m,
-            width_m=width_m,
-            max_turn_rad=max_turn,
-            tortuosity=tortuosity,
-            texture_std=texture_std,
-            parallel_borders_wide=parallel_wide,
-        )
+    candidates: List[TrenchCandidate] = []
+    for chain in merge_traces(raw_traces):
+        if len(chain) < 2:
+            continue
+        metrics = polyline_metrics(chain, gray, gsd_m, cfg)
         is_trench, conf, reasons = classify_segment(metrics, cfg)
-        coords = [px_to_lonlat(x0, y0), px_to_lonlat(x1, y1)]
+        coords = [px_to_lonlat(px, py) for px, py in chain]
         candidates.append(TrenchCandidate(
-            coords_lonlat=[(round(lo, 6), round(la, 6)) for lo, la in coords],
-            metrics=metrics, is_trench=is_trench, confidence=conf, reasons=reasons,
-        ))
+            coords_lonlat=coords, metrics=metrics,
+            is_trench=is_trench, confidence=conf, reasons=reasons))
     return candidates
 
 

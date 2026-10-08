@@ -31,10 +31,12 @@ export const trenchGeometry = z.object({
     }),
     z.object({
       type: z.literal('Polygon'),
-      coordinates: z
-        .array(lngLat)
-        .min(4)
-        .max(2000),
+      // GeoJSON Polygon — массив колец; принимаем и плоский массив точек (упрощение клиента),
+      // нормализация в [[ring]] выполняется на этапе сохранения (см. /api/trenches POST)
+      coordinates: z.union([
+        z.array(lngLat).min(4).max(2000),           // плоское кольцо [lon,lat][]
+        z.array(z.array(lngLat)).min(1).max(10),    // корректный формат колец [[lon,lat]...]
+      ]),
     }),
   ]),
   properties: z.record(z.string(), z.any()).optional(),

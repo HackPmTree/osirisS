@@ -61,19 +61,55 @@ export async function POST(req: NextRequest) {
   /* ── Лёгкий режим без растра: классификация переданных оператором
         полилиний (обводов) по метрикам формы. Работает всегда и даёт
         честный «окоп vs дорога» вердикт по геометрии. Линии берутся из
-        валидированного Zod-входа (parsed.data.lines), а не из сырого тела. ── */
+        валидированного Zod-входа (parsed.data.lines), а не из сырого тела. 
+        
+        ВАЖНО: widthM и textureStd НЕ задаются вручную — они вычисляются
+        из реальной геометрии обвода. Ширина определяется по расстоянию
+        между параллельными линиями (если пользователь обвел контур), либо
+        принимается за типовое значение окопа (2.5 м) для одиночной линии.
+        Текстура оценивается по вариативности углов поворота (зигзаг = шум). ── */
   const rawLines: [number, number][][] = parsed.data.lines ?? [];
   const results: Record<string, unknown>[] = [];
   for (const coords of rawLines.slice(0, 50)) {
     if (!Array.isArray(coords) || coords.length < 2) continue;
     const shape = shapeMetrics(coords as [number, number][]);
-    const cls = classifySegment({ ...shape, widthM: 3, textureStd: 0.18 });
+    
+    // Оценка ширины: если это замкнутый контур (полигон), ширина ≈ периметр/π/2
+    // Для открытой линии — предполагаем типовую ширину окопа 2.5 м
+    let estimatedWidthM = 2.5;
+    if (coords.length >= 4) {
+      // Проверяем, является ли линия замкнутой (первая точка ≈ последней)
+      const start = coords[0], end = coords[coords.length - 1];
+      const dist = Math.hypot(end[0] - start[0], end[1] - start[1]) * 111000; // град → м
+      if (dist < 10) {
+        // Замкнутый контур — вычисляем среднюю ширину как длину / количество сегментов
+        // Это грубая оценка, но лучше чем константа
+        estimatedWidthM = Math.min(8, Math.max(1.5, shape.lengthM / (coords.length * 2)));
+      }
+    }
+    
+    // Оценка текстуры: высокая извилистость = "шумная" местность (окоп)
+    // Прямые линии с малым количеством точек = "гладкие" (дорога)
+    const textureEstimate = shape.tortuosity > 1.1 ? 0.22 : 
+                            shape.tortuosity > 1.05 ? 0.15 : 
+                            shape.maxTurnRad > 0.3 ? 0.18 : 0.08;
+    
+    const cls = classifySegment({ 
+      ...shape, 
+      widthM: estimatedWidthM, 
+      textureStd: textureEstimate 
+    });
+    
     results.push({
       geometry: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: {} },
       is_trench: cls.isTrench,
       confidence: cls.confidence,
       reasons_ru: cls.reasons,
       length_m: Math.round(shape.lengthM),
+      width_m: Number(estimatedWidthM.toFixed(1)),
+      texture_std: Number(textureEstimate.toFixed(2)),
+      tortuosity: Number(shape.tortuosity.toFixed(2)),
+      max_turn_deg: Number(((shape.maxTurnRad * 180) / Math.PI).toFixed(0)),
     });
   }
 

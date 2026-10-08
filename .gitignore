@@ -1,2 +1,4 @@
-# TypeScript build info
+__pycache__/
+*.pyc
+node_modules/
 tsconfig.tsbuildinfo

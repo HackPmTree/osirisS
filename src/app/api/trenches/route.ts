@@ -62,10 +62,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ВАЛИДАЦИЯ НЕ ПРОЙДЕНА', detail: zodErrorText(parsed.error) }, { status: 400 });
   }
 
+  /* ── Нормализация геометрии: схема принимает упрощённый формат,
+        хранилище требует канонический GeoJSON ─────────────────────── */
+  const g = parsed.data.geometry.geometry; // внутренняя геометрия (LineString/Polygon)
+  let normGeometry: TrenchFeature['geometry']['geometry'];
+  if (g.type === 'LineString') {
+    normGeometry = { type: 'LineString', coordinates: g.coordinates };
+  } else {
+    // Polygon: проверяем вложенность — [lon,lat][] (плоское кольцо) или [[lon,lat]...] (кольца)
+    const first = (g.coordinates as any[])[0];
+    const rings = Array.isArray(first) && Array.isArray(first[0])
+      ? (g.coordinates as [number, number][][])          // уже корректный формат колец
+      : [g.coordinates as [number, number][]];            // плоское кольцо → оборачиваем
+    normGeometry = { type: 'Polygon', coordinates: rings };
+  }
+
   const feature: TrenchFeature = {
     ...parsed.data,
     // properties необязателен в схеме Zod, но хранилище ждёт объект — нормализуем.
-    geometry: { ...parsed.data.geometry, properties: parsed.data.geometry.properties ?? {} },
+    geometry: {
+      type: 'Feature',
+      properties: parsed.data.geometry.properties ?? {},
+      geometry: normGeometry,
+    },
     createdAt: parsed.data.createdAt ?? Date.now(),
     type: 'trench', // серверный инвариант, независимо от тела запроса
   };
