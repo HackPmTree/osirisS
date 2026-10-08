@@ -121,6 +121,13 @@ export const RU: Record<string, string> = {
   'Caching': 'Кэширование',
   'Rate limits': 'Лимиты запросов',
   'Timestamps': 'Метки времени',
+  // Каталог API — раздел «Земля и окружающая среда» (эндпоинт /api/sentinel)
+  'Sentinel satellite imagery scenes covering a point.':
+    'Сцены спутниковых снимков Sentinel, покрывающие точку.',
+  'Latitude of the point of interest.': 'Широта интересующей точки.',
+  'Longitude of the point of interest.': 'Долгота интересующей точки.',
+  'Search radius in kilometres.': 'Радиус поиска в километрах.',
+  'How far back to search, in days.': 'Глубина поиска в архиве, в днях.',
 };
 export function ru(s?: string | null): string {
   if (!s) return s as any;

@@ -171,6 +171,21 @@ export const API_GROUPS: ApiGroup[] = [
         ],
         returns: ['scenes', 'timestamp'],
       },
+      {
+        path: '/api/satellite-changes',
+        method: 'GET',
+        // Описание эндпоинта сразу на русском — источник: модуль
+        // engine/satellite_analysis.py (STAC Sentinel-2 + NDVI-разница).
+        summary: 'Разведка изменений ландшафта по снимкам Sentinel-2: земляные работы, нарушения почвенного покрова, линейные структуры.',
+        params: [
+          { name: 'lon', required: true, desc: 'Долгота центра района анализа.', example: '37.681517' },
+          { name: 'lat', required: true, desc: 'Широта центра района анализа.', example: '50.284959' },
+          { name: 'radius', desc: 'Радиус района в километрах.', example: '12' },
+          { name: 'days', desc: 'Глубина архива съёмок в днях.', example: '45' },
+        ],
+        returns: ['region', 'generated_at', 'scenes_analyzed', 'changes', 'geojson', 'disclaimer'],
+        notes: 'Источники: открытые данные Copernicus Sentinel-2 через STAC-каталог Element84. Только OSINT и обнаружение изменений; тактическое целеуказание не поддерживается. Ответ кэшируется на 5 минут.',
+      },
     ],
   },
   {

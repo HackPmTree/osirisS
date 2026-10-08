@@ -9,7 +9,8 @@ export async function GET(req: Request) {
   const days = parseInt(searchParams.get('days') || '30'); // Expanded to 30 days for more results
 
   if (isNaN(lat) || isNaN(lng)) {
-    return NextResponse.json({ error: 'Missing lat/lng parameters' }, { status: 400 });
+    // Сообщение об ошибке — на русском (100% локализация UI/консоли)
+    return NextResponse.json({ error: 'Не заданы обязательные параметры lat/lng (широта, долгота).' }, { status: 400 });
   }
 
   try {
@@ -102,7 +103,8 @@ export async function GET(req: Request) {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
     });
   } catch (e) {
-    return NextResponse.json({ error: 'Sentinel lookup failed', scenes: [] }, { status: 500 });
+    // Сообщение об ошибке — на русском (100% локализация UI/консоли)
+    return NextResponse.json({ error: 'Не удалось выполнить поиск по архиву Sentinel.', scenes: [] }, { status: 500 });
   }
 }
 
