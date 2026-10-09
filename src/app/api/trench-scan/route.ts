@@ -266,6 +266,9 @@ function detectLinearFeatures(g: { w: number; h: number; data: Uint8Array }, gsd
     darkRatio: number; tortuosity: number; maxTurnRad: number;
   }[] = [];
   const atDark = (x: number, y: number) => (x >= 0 && y >= 0 && x < w && y < h ? darkOnly[y * w + x] : 0);
+  /* Границы структуры (mask): выход за них = конец луча. Функция была
+     потеряна при рефакторинге — без неё файл не компилировался (TS2304). */
+  const at = (x: number, y: number) => (x >= 0 && y >= 0 && x < w && y < h ? mask[y * w + x] : 0);
   for (const { pts } of chains) {
     // длина цепи в пикселях
     let lenPx = 0;

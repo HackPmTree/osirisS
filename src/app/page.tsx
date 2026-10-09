@@ -490,7 +490,7 @@ export default function Dashboard() {
   const lastGeocodedPos = useRef<{ lat: number; lng: number } | null>(null);
 
   // ── DEFAULT: Most layers OFF — fast initial load ──
-  const [activeLayers, setActiveLayers] = useState({
+  const [activeLayers, setActiveLayers] = useState<Record<string, boolean>>({
     flights: false,
     private: false,
     jets: false,
@@ -1642,6 +1642,7 @@ export default function Dashboard() {
           onDrawComplete={handleDrawComplete}
           drawnPolygons={drawnPolygons}
           aircraftAirports={aircraftAirports}
+          staticTrenches={activeLayers.trench_static ? staticTrenchesStore.filtered : null}
           onOiGlobe={handleOiGlobe}
           onOiSelect={handleOiSelect}
           onOiHover={setOiHover}
