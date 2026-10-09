@@ -1,0 +1,134 @@
+{
+  "type": "FeatureCollection",
+  "name": "trenches-test",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "trn-001",
+        "type": "trench",
+        "status": "active",
+        "length_m": 840,
+        "confidence": 0.92,
+        "source": "Спутник WorldView-3, 2026-09-12",
+        "notes": "Позиция с ходом сообщения, зигзаг, три боевых участка"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.6400, 48.7400],
+          [37.6418, 48.7409],
+          [37.6436, 48.7401],
+          [37.6454, 48.7412],
+          [37.6472, 48.7405],
+          [37.6490, 48.7416],
+          [37.6508, 48.7408]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "trn-002",
+        "type": "trench",
+        "status": "abandoned",
+        "length_m": 620,
+        "confidence": 0.71,
+        "source": "Sentinel-2, 2026-03-04",
+        "notes": "Зарастает, следов активности нет с зимы"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.7000, 48.7600],
+          [37.7017, 48.7610],
+          [37.7034, 48.7602],
+          [37.7051, 48.7613],
+          [37.7068, 48.7605]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "trn-003",
+        "type": "trench",
+        "status": "destroyed",
+        "length_m": 450,
+        "confidence": 0.66,
+        "source": "OSINT видео, 2026-06-21",
+        "notes": "Разрушена ударом, воронки в двух местах, линия прервана"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [37.5800, 48.7100],
+          [37.5815, 48.7110],
+          [37.5830, 48.7102],
+          [37.5845, 48.7113],
+          [37.5860, 48.7105]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "bnk-001",
+        "type": "bunker",
+        "status": "active",
+        "confidence": 0.85,
+        "source": "Наземная разведка, 2026-08-30",
+        "notes": "Бетонированный блиндаж, вход с обратной стороны"
+      },
+      "geometry": { "type": "Point", "coordinates": [37.6454, 48.7412] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "bnk-002",
+        "type": "bunker",
+        "status": "destroyed",
+        "confidence": 0.6,
+        "source": "Спутник Planet Labs, 2026-07-15",
+        "notes": "Прямое попадание, перекрытие обрушено"
+      },
+      "geometry": { "type": "Point", "coordinates": [37.5830, 48.7102] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "pbx-001",
+        "type": "pillbox",
+        "status": "active",
+        "confidence": 0.9,
+        "source": "Спутник ICEYE SAR, 2026-09-01",
+        "notes": "Огневая точка, амбразура на юг, простреливает перекрёсток"
+      },
+      "geometry": { "type": "Point", "coordinates": [37.6950, 48.7550] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "pbx-002",
+        "type": "pillbox",
+        "status": "abandoned",
+        "confidence": 0.55,
+        "source": "OSINT фото, 2026-04-10",
+        "notes": "Амбразура заварена, позиция пустует"
+      },
+      "geometry": { "type": "Point", "coordinates": [37.7068, 48.7605] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "fox-001",
+        "type": "foxhole",
+        "status": "unknown",
+        "confidence": 0.4,
+        "source": "Ранний снимок, требует уточнения",
+        "notes": "Кандидат: одиночная позиция, возможен ложный контакт"
+      },
+      "geometry": { "type": "Point", "coordinates": [37.6150, 48.7280] }
+    }
+  ]
+}

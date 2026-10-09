@@ -21,6 +21,8 @@ import LiveNewsPreviews, { type PreviewFeed } from '@/components/LiveNewsPreview
 import { attachTerrain, type TerrainStatus } from '@/lib/map-terrain';
 
 import { applyMapProjection } from '@/lib/map-projection';
+import { addTrenchesLayers, removeTrenchesLayers, TRENCH_SRC } from '@/components/layers/TrenchesLayer';
+import { TRENCH_STATUS_LABEL_RU, TRENCH_TYPE_LABEL_RU, type TrenchStatus, type TrenchType } from '@/types/trench';
 
 /** The catalogue fields the satellite layer and its popup actually read. */
 interface SatelliteRow {
@@ -62,6 +64,12 @@ interface OsirisMapProps {
   theme?: 'core' | 'ghost';
   drawnPolygons?: Array<{ id: string; name: string; geojson: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.LineString>; color: string }>;
   arcgisLayers?: Array<{ id: string; title: string; geojson: any; color?: string; opacity?: number }>;
+  /**
+   * Статический слой укреплений (окопов) — GeoJSON из /public/data/trenches.geojson,
+   * уже отфильтрованный панелью «ОКОПЫ (ДАННЫЕ)». null/undefined или выключенный
+   * activeLayers.trench_static — слой убирается с карты.
+   */
+  staticTrenches?: unknown | null;
   /** Active draw mode, or null when not drawing. */
   drawMode?: DrawMode | null;
   onDrawProgress?: (p: DrawProgress | null) => void;
@@ -180,7 +188,7 @@ interface AlertPinFeature {
   properties: AlertPinProps;
 }
 
-function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, onReady, flyToLocation, alertPinIds = null, projection = 'globe', terrainEnabled = false, terrainRetry = 0, terrainFocus = 0, onTerrainStatusChange, mapStyle = 'dark', sweepData, scanTargets = [], demoMode = false, theme = 'core', drawnPolygons = [], arcgisLayers = [], drawMode = null, onDrawComplete, onDrawProgress, onDrawCancel, drawCommand = null, onMapCenter, route = null, userLocation = null, followUser = false, onFollowInterrupt, navigating = false, aircraftAirports = {}, onOiGlobe, onOiSelect, onOiHover, onOiFollow, oiHighlight = null }: OsirisMapProps) {
+function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, onReady, flyToLocation, alertPinIds = null, projection = 'globe', terrainEnabled = false, terrainRetry = 0, terrainFocus = 0, onTerrainStatusChange, mapStyle = 'dark', sweepData, scanTargets = [], demoMode = false, theme = 'core', drawnPolygons = [], arcgisLayers = [], staticTrenches = null, drawMode = null, onDrawComplete, onDrawProgress, onDrawCancel, drawCommand = null, onMapCenter, route = null, userLocation = null, followUser = false, onFollowInterrupt, navigating = false, aircraftAirports = {}, onOiGlobe, onOiSelect, onOiHover, onOiFollow, oiHighlight = null }: OsirisMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -3193,6 +3201,116 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       }
     });
   }, [mapReady, arcgisLayers]);
+
+  // ── TRENCHES STATIC LAYER (окопы из /public/data/trenches.geojson) ──
+  // Рендер целиком через source+layers MapLibre: никаких DOM-элементов на
+  // объект (ТЗ §4.5). Фильтры панели приходят уже отфильтрованным FC —
+  // повторный вызов addTrenchesLayers делает только setData().
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const on = !!activeLayers.trench_static && !!staticTrenches;
+    if (!on) { removeTrenchesLayers(map); return; }
+    addTrenchesLayers(map, staticTrenches as never);
+  }, [mapReady, activeLayers.trench_static, staticTrenches]);
+
+  // Клик → popup с деталями; hover → подсветка линии + курсор.
+  // Обработчики навешиваются один раз и проверяют наличие источника —
+  // слои пересоздаются при вкл/выкл, события MapLibre по id слоя это терпят.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const lineLayer = `${TRENCH_SRC}-line`;
+    const hoverLayer = `${TRENCH_SRC}-hover`;
+    const pointsLayer = `${TRENCH_SRC}-points`;
+
+    const esc = (s: unknown): string => String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    /** Координата для якоря попапа: центр линии или сама точка. */
+    const anchorOf = (geom: any): [number, number] | null => {
+      if (!geom) return null;
+      if (geom.type === 'Point') return geom.coordinates;
+      if (geom.type === 'LineString' && geom.coordinates?.length) {
+        const mid = geom.coordinates[Math.floor(geom.coordinates.length / 2)];
+        return mid as [number, number];
+      }
+      return null;
+    };
+
+    const trenchPopupHtml = (p: any): string => {
+      const typeRu = TRENCH_TYPE_LABEL_RU[p?.trench_type as TrenchType] ?? 'Укрепление';
+      const statusRu = TRENCH_STATUS_LABEL_RU[p?.status as TrenchStatus] ?? '—';
+      const lenM = typeof p?.length_m === 'number' ? `${Math.round(p.length_m)} м` : '—';
+      const conf = typeof p?.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '—';
+      const color = esc(p?.color || '#e63946');
+      return `<div style="background:rgba(12,14,26,0.95);backdrop-filter:blur(16px);border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8E6E0;border:1px solid ${color}55;min-width:220px;">
+        <div style="font-size:12px;letter-spacing:0.08em;color:${color};margin-bottom:6px;">▮ ${esc(typeRu)}</div>
+        <table style="width:100%;border-collapse:collapse;line-height:1.7;">
+          <tr><td style="color:rgba(255,255,255,0.4);padding-right:8px;">Статус</td><td>${esc(statusRu)}</td></tr>
+          <tr><td style="color:rgba(255,255,255,0.4);">Длина</td><td>${esc(lenM)}</td></tr>
+          <tr><td style="color:rgba(255,255,255,0.4);">Достоверность</td><td>${esc(conf)}</td></tr>
+          <tr><td style="color:rgba(255,255,255,0.4);">Источник</td><td>${esc(p?.source || '—')}</td></tr>
+        </table>
+        ${p?.notes ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);">${esc(p.notes)}</div>` : ''}
+        <div style="margin-top:6px;font-size:8.5px;letter-spacing:0.18em;color:rgba(255,255,255,0.3);">${esc(p?.id || '')}</div>
+      </div>`;
+    };
+
+    const featureProps = (f: GeoJSON.Feature) => f.properties as Record<string, unknown> | null;
+
+    const onClick = (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
+      if (!map.getSource(TRENCH_SRC)) return;
+      const f = e.features?.[0];
+      if (!f) return;
+      const coords = anchorOf(f.geometry as any);
+      if (!coords) return;
+      popupRef.current?.remove();
+      popupRef.current = new maplibregl.Popup({ closeButton: true, maxWidth: '420px', offset: 14 })
+        .setLngLat(coords).setHTML(trenchPopupHtml(featureProps(f))).addTo(map);
+    };
+
+    const clearHover = () => {
+      if (map.getLayer(hoverLayer)) {
+        map.setPaintProperty(hoverLayer, 'line-opacity', 0);
+        map.setFilter(hoverLayer, ['==', ['id'], '__none__']);
+      }
+      map.getCanvas().style.cursor = '';
+    };
+
+    const onMouseMove = (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
+      if (!map.getSource(TRENCH_SRC)) return;
+      const f = e.features?.[0];
+      if (!f || !map.getLayer(hoverLayer)) { clearHover(); return; }
+      map.getCanvas().style.cursor = 'pointer';
+      // Подсветить конкретную линию под курсором: фильтр по feature id.
+      map.setFilter(hoverLayer, ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get', 'id'], String((featureProps(f) as any)?.id ?? '')]]);
+      map.setPaintProperty(hoverLayer, 'line-color', String((featureProps(f) as any)?.color || '#ffffff'));
+      map.setPaintProperty(hoverLayer, 'line-opacity', 0.55);
+    };
+
+    const onMouseLeave = () => clearHover();
+
+    map.on('click', lineLayer, onClick as any);
+    map.on('click', pointsLayer, onClick as any);
+    map.on('mousemove', lineLayer, onMouseMove as any);
+    map.on('mouseleave', lineLayer, onMouseLeave);
+    const onPointsEnter = (e: any) => { if (e.features?.length) map.getCanvas().style.cursor = 'pointer'; };
+    const onPointsLeave = () => { map.getCanvas().style.cursor = ''; };
+    map.on('mouseenter', pointsLayer, onPointsEnter);
+    map.on('mouseleave', pointsLayer, onPointsLeave);
+
+    return () => {
+      map.off('click', lineLayer, onClick as any);
+      map.off('click', pointsLayer, onClick as any);
+      map.off('mousemove', lineLayer, onMouseMove as any);
+      map.off('mouseleave', lineLayer, onMouseLeave);
+      map.off('mouseenter', pointsLayer, onPointsEnter);
+      map.off('mouseleave', pointsLayer, onPointsLeave);
+      clearHover();
+    };
+  }, [mapReady]);
 
   const drawCbRef = useRef({ onDrawComplete, onDrawProgress, onDrawCancel });
   /** Set by the drawing effect so on-screen buttons can dispatch into it. */
