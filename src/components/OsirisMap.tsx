@@ -197,6 +197,10 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
   const alertPinsRef = useRef<AlertPinFeature[]>([]);
   const openAlertPinRef = useRef<((id: string) => void) | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  /* Set when every WebGL boot attempt failed (no GPU / software rendering
+     blocked). The dashboard stays alive; the map area shows a fallback card
+     instead of throwing the whole page into the error boundary. */
+  const [webglUnavailable, setWebglUnavailable] = useState(false);
 
   // Do not replay an earlier explicit zoom request after theme/retry remounts.
   const lastTerrainFocus = useRef(terrainFocus);
@@ -377,33 +381,40 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       },
     };
 
-    // MapLibre asks for a high-performance WebGL2 context and throws outright if it
-    // cannot get one. Some machines refuse that exact request while still granting a
-    // plainer one, so walk down to weaker requests before giving up. The WebGL1 rung
-    // this used to have cannot come back: MapLibre 6's ContextType is 'webgl2' alone,
-    // so machines that only ever managed WebGL1 are now out of reach either way.
-    // Dropping antialias is the last rung left for a struggling GPU.
-    const attributeFallbacks: maplibregl.MapOptions['canvasContextAttributes'][] = [
-      undefined,
-      { powerPreference: 'low-power', failIfMajorPerformanceCaveat: false },
-      { powerPreference: 'low-power', failIfMajorPerformanceCaveat: false, antialias: false },
+    /* MapLibre 4.x exposes the context knobs as top-level options
+       (failIfMajorPerformanceCaveat / antialias), not as the v6
+       `canvasContextAttributes` bag. Software renderers (llvmpipe/ANGLE on
+       machines without working GPU acceleration) can be refused unless we ask
+       plainly, so walk from the default request down to the weakest one before
+       giving up. A failed constructor leaves its canvas behind; each retry
+       starts from a clean container. */
+    type BootAttempt = Pick<maplibregl.MapOptions, 'failIfMajorPerformanceCaveat' | 'antialias'>;
+    const bootAttempts: BootAttempt[] = [
+      {},
+      { antialias: false },
+      { antialias: false, failIfMajorPerformanceCaveat: false },
     ];
 
     let map: maplibregl.Map | undefined;
-    for (const canvasContextAttributes of attributeFallbacks) {
+    let lastError: unknown;
+    for (let i = 0; i < bootAttempts.length; i++) {
       try {
-        map = new maplibregl.Map(
-          canvasContextAttributes ? { ...baseOptions, canvasContextAttributes } : baseOptions
-        );
+        map = new maplibregl.Map({ ...baseOptions, ...bootAttempts[i] });
         break;
       } catch (e) {
-        // A failed constructor leaves its canvas behind; the next attempt needs a clean container.
         container.innerHTML = '';
-        if (canvasContextAttributes === attributeFallbacks[attributeFallbacks.length - 1]) throw e;
+        lastError = e;
         console.warn('[OSIRIS] WebGL context rejected, retrying with weaker attributes:', e instanceof Error ? e.message : e);
       }
     }
-    if (!map) return;
+    if (!map) {
+      /* Do not rethrow: throwing here unmounts the whole dashboard into the
+         error boundary. Instead show an in-place fallback so the rest of the
+         UI (panels, scanner, search) keeps working without a map. */
+      setWebglUnavailable(true);
+      console.error('[OSIRIS] Map could not start on this machine:', lastError instanceof Error ? lastError.message : lastError);
+      return;
+    }
 
     map.on('load', () => {
       mapRef.current = map;
@@ -3526,6 +3537,30 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       {/* Карта — «фон» интерфейса: z-index 0, чтобы панели и кнопки
           (LayerPanel z-[100], OsintPanel z-[999]) лежали поверх неё. */}
       <div ref={containerRef} className="absolute inset-0 z-0 w-full h-full" />
+      {webglUnavailable && (
+        <div className="absolute inset-0 z-[1] flex items-center justify-center bg-black/60 p-4">
+          <div className="max-w-md border border-[#e63946]/50 bg-[#0b0b0b]/95 p-5 font-mono text-xs text-[#c8c8c8] shadow-lg">
+            <div className="mb-2 text-sm tracking-widest text-[#e63946]">⚠ КАРТА НЕДОСТУПНА</div>
+            <p className="mb-2 leading-relaxed">
+              Этот браузер не смог создать WebGL-контекст — карта не может отрисоваться.
+              Остальные панели OSIRIS (разведданные, сканер окопов, поиск) работают как обычно.
+            </p>
+            <p className="mb-2 leading-relaxed text-[#8a8a8a]">Что попробовать:</p>
+            <ul className="list-disc space-y-1 pl-5 text-[#8a8a8a]">
+              <li>Включить аппаратное ускорение в настройках браузера и перезапустить его;</li>
+              <li>Обновить браузер и драйвер видеокарты;</li>
+              <li>Запустить с флагом <code className="text-[#ffd166]">--ignore-gpu-blocklist</code> или разрешить программный рендеринг (SwiftShader/llvmpipe);</li>
+              <li>Проверить поддержку на webglreport.com/?v=2.</li>
+            </ul>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 border border-[#e63946]/60 px-4 py-1.5 tracking-widest text-[#e63946] transition-colors hover:bg-[#e63946]/10"
+            >
+              ПЕРЕЗАПУСТИТЬ
+            </button>
+          </div>
+        </div>
+      )}
       {mapReady && mapRef.current && (
         <CctvPreviews
           mapRef={mapRef}
