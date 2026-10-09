@@ -10,13 +10,14 @@ import {
 import StyleStudio from './StyleStudio';
 import GeoImportPanel, { type ImportedLayer } from './GeoImportPanel';
 import TrenchScanner from './TrenchScanner';
+import TrenchesPanel from './panels/TrenchesPanel';
 import { TERRAIN_MIN_ZOOM, type TerrainStatus } from '@/lib/map-terrain';
 import { MapPinned } from 'lucide-react';
 
 interface LayerPanelProps {
   data: any;
-  activeLayers: any;
-  setActiveLayers: React.Dispatch<React.SetStateAction<any>>;
+  activeLayers: Record<string, boolean>;
+  setActiveLayers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isMobile?: boolean;
   theme?: 'core' | 'ghost';
   setTheme?: (theme: 'core' | 'ghost') => void;
@@ -36,6 +37,8 @@ interface LayerPanelProps {
   onImportBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
   /** Прокидывается из страницы в модуль «Картограф укреплений» (левое меню). */
   trenchProps?: React.ComponentProps<typeof TrenchScanner>;
+  /** Прокидывается из страницы в панель статического слоя «Окопы (данные)». */
+  staticTrenchesPanelProps?: React.ComponentProps<typeof TrenchesPanel>;
 }
 
 interface LayerDef {
@@ -53,16 +56,20 @@ interface LayerDef {
 }
 
 interface LayerGroupDef {
+  /** Уникальный id группы: на нём держатся hover/pin flyout'ов. Не может
+   *  совпадать с label другой группы (иначе кнопки «сливаются»). */
+  id: string;
   label: string;
   fullLabel: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   layers: LayerDef[];
   /** Встроенная нестандартная панель вместо списка слоёв (импорт карты, окопы). */
-  custom?: 'geoimport' | 'trench';
+  custom?: 'geoimport' | 'trench' | 'trench-static';
 }
 
 const LAYER_GROUPS: LayerGroupDef[] = [
   {
+    id: 'sdk',
     label: 'SDK',
     fullLabel: 'ОСИРИС SDK',
     icon: Network,
@@ -72,6 +79,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'avia',
     label: 'АВИА',
     fullLabel: 'АВИАЦИЯ',
     icon: Plane,
@@ -83,6 +91,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'sea',
     label: 'МОРЕ',
     fullLabel: 'МОРСКОЙ ФЛОТ',
     icon: Ship,
@@ -91,6 +100,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'space',
     label: 'КОСМОС',
     fullLabel: 'ОТСЛЕЖИВАНИЕ КОСМОСА',
     icon: Satellite,
@@ -104,6 +114,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'surveil',
     label: 'НАБЛЮД.',
     fullLabel: 'НАБЛЮДЕНИЕ',
     icon: Camera,
@@ -114,6 +125,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'natural-threats',
     label: 'УГРОЗЫ',
     fullLabel: 'ПРИРОДНЫЕ УГРОЗЫ',
     icon: CloudLightning,
@@ -124,6 +136,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'intel-threats',
     label: 'УГРОЗЫ',
     fullLabel: 'УГРОЗЫ И РАЗВЕДАННЫЕ ДАННЫЕ',
     icon: AlertTriangle,
@@ -135,6 +148,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'cyber',
     label: 'СЕТЬ',
     fullLabel: 'СЕТЕВАЯ РАЗВЕДКА',
     icon: Network,
@@ -144,6 +158,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'net',
     label: 'ИНТЕРНЕТ',
     fullLabel: 'СЕТЬ И СОБЫТИЯ',
     icon: Megaphone,
@@ -153,6 +168,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     ],
   },
   {
+    id: 'import',
     label: 'ИМПОРТ',
     fullLabel: 'ИМПОРТ КАРТЫ (ЯНДЕКС/KML/GPX)',
     icon: MapPinned,
@@ -161,6 +177,7 @@ const LAYER_GROUPS: LayerGroupDef[] = [
   },
   {
     /* Модуль «Картограф укреплений» — в левом меню, рядом с импортом карты. */
+    id: 'trench-map',
     label: 'ОКОПЫ',
     fullLabel: 'КАРТОГРАФ УКРЕПЛЕНИЙ (ОКОПЫ)',
     icon: Shovel,
@@ -170,6 +187,17 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     custom: 'trench' as const,
   },
   {
+    /* Статический слой укреплений из /data/trenches.geojson — только просмотр:
+       тумблер видимости, счётчик и фильтры по типу/статусу (ТЗ «Окопы»). */
+    id: 'trench-static',
+    label: 'УКРЕПЫ',
+    fullLabel: 'ОКОПЫ (СТАТИЧЕСКИЕ ДАННЫЕ)',
+    icon: Mountain,
+    layers: [],
+    custom: 'trench-static' as const,
+  },
+  {
+    id: 'view',
     label: 'ВИД',
     fullLabel: 'ОТОБРАЖЕНИЕ',
     icon: Sun,
@@ -230,7 +258,7 @@ function SubLayerStem() {
   );
 }
 
-function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true, importedLayers = [], onAddImportedLayer, onRemoveImportedLayer, onImportBounds, trenchProps }: LayerPanelProps) {
+function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true, importedLayers = [], onAddImportedLayer, onRemoveImportedLayer, onImportBounds, trenchProps, staticTrenchesPanelProps }: LayerPanelProps) {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   /**
    * A pinned group stays open when the pointer leaves. Hover-only flyouts are
@@ -270,6 +298,13 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
           onSaved={trenchProps?.onSaved}
         />
       );
+    }
+    if (group.custom === 'trench-static') {
+      /* Панель статического слоя окопов без props страницы не показывается:
+         видимость живёт в activeLayers.trench_static, а данные — в стейте
+         страницы; рендерить заглушку с нерабочими тумблерами хуже, чем
+         молча оставить группу скрытой (см. filter ниже). */
+      return staticTrenchesPanelProps ? <TrenchesPanel {...staticTrenchesPanelProps} /> : null;
     }
     return null;
   };
@@ -311,7 +346,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   const visibleGroups = LAYER_GROUPS.map(g => ({
     ...g,
     layers: g.layers.filter(l => !l.requires || capabilities[l.requires]),
-  })).filter(g => g.layers.length > 0 || g.custom);
+  })).filter(g => g.layers.length > 0 || (g.custom && g.custom !== 'trench-static') || !!staticTrenchesPanelProps);
 
   const getCount = (dk: string, catKey?: string): number | null => {
     if (!dk) return null;
@@ -333,11 +368,11 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   if (isMobile) {
     return (
       <div className="flex flex-col gap-5 py-2">
-        {visibleGroups.map((group, index) => (
+        {visibleGroups.map((group) => (
           /* Ключ должен включать индекс: в массиве групп есть дубликаты label
              (например, две группы «УГРОЗЫ»), что вызывало ошибку React
              "Encountered two children with the same key". */
-          <div key={`${group.label}-${index}`} className="flex flex-col gap-2">
+          <div key={group.id} className="flex flex-col gap-2">
             <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/30 border-b border-white/[0.06] pb-1.5">
               {group.fullLabel}
             </div>
@@ -370,7 +405,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                   </button>
                 );
               })}
-              {group.label === 'ВИД' && terrainDetails}
+              {group.id === 'view' && terrainDetails}
             </div>
           </div>
         ))}
@@ -428,31 +463,31 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
       }}
     >
       <div className="flex-1 flex flex-col items-center gap-1">
-        {visibleGroups.map((group, index) => {
+        {visibleGroups.map((group) => {
           /* Sub-layers modify a parent rather than draw anything of their own,
              so they do not count towards the rail's reading. */
           const counted = group.layers.filter(l => !l.parent);
           const groupActive = counted.some(l => activeLayers[l.key]);
-          const isHovered = hoveredGroup === group.label;
+          const isHovered = hoveredGroup === group.id;
           const Icon = group.icon;
 
           const activeCount = counted.filter(l => activeLayers[l.key]).length;
-          const isPinned = pinnedGroup === group.label;
+          const isPinned = pinnedGroup === group.id;
           const isOpen = isHovered || isPinned;
 
           return (
             <div
               /* Уникальный ключ: label не уникален (две группы «УГРОЗЫ») */
-              key={`${group.label}-${index}`}
+              key={group.id}
               className="relative flex items-center justify-center"
-              onMouseEnter={() => setHoveredGroup(group.label)}
+              onMouseEnter={() => setHoveredGroup(group.id)}
               onMouseLeave={() => setHoveredGroup(null)}
             >
               {/* A real button, not a div: this is keyboard reachable, focusable
                   and announced. Clicking pins the flyout open so it can be
                   worked in rather than only glanced at. */}
               <button
-                onClick={() => setPinnedGroup(isPinned ? null : group.label)}
+                onClick={() => setPinnedGroup(isPinned ? null : group.id)}
                 aria-expanded={isOpen}
                 aria-label={`${group.fullLabel}${activeCount ? ` — активно: ${activeCount}` : ''}`}
                 title={group.fullLabel}
@@ -567,7 +602,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                           </button>
                         );
                       })}
-                      {group.label === 'ВИД' && terrainDetails}
+                      {group.id === 'view' && terrainDetails}
                     </div>
                   </motion.div>
                 )}

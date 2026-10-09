@@ -14,7 +14,7 @@
  * и HTML-экранирование.
  */
 
-import type maplibregl from 'maplibre-gl';
+import type * as maplibregl from 'maplibre-gl';
 import type { StaticTrenchFC } from '@/lib/trench-static';
 
 export const TRENCH_SRC = 'trenches-static';

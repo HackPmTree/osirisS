@@ -340,6 +340,10 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, [trenchVersion]);
 
+  /* ── Статический слой «Окопы (данные)»: /data/trenches.geojson, только
+     просмотр (ТЗ). Видимость — в activeLayers.trench_static, фильтры — здесь. ── */
+  const staticTrenchesStore = useTrenches();
+
   // ── GEO-IMPORT handlers: add/remove imported layers and fly to their extent ──
   const handleImportAdd = useCallback((layer: ImportedLayer) => {
     setImportedLayers(prev => [...prev.filter(l => l.id !== layer.id), layer]);
@@ -486,7 +490,7 @@ export default function Dashboard() {
   const lastGeocodedPos = useRef<{ lat: number; lng: number } | null>(null);
 
   // ── DEFAULT: Most layers OFF — fast initial load ──
-  const [activeLayers, setActiveLayers] = useState({
+  const [activeLayers, setActiveLayers] = useState<Record<string, boolean>>({
     flights: false,
     private: false,
     jets: false,
@@ -530,6 +534,9 @@ export default function Dashboard() {
     cyber_attacks: false,
     /* Слой укреплений (окопы) — включён: модуль «ОКОПЫ» в левом меню. */
     trenches: true,
+    /* Статический слой окопов из /data/trenches.geojson — выключен по умолчанию,
+       включается тумблером панели «УКРЕПЫ» в левом меню. */
+    trench_static: false,
     gdelt_events: false,
     cf_outages: false,
     cf_attacks: false,
@@ -664,6 +671,21 @@ export default function Dashboard() {
       shapes: drawnPolygons,
       onStartDrawLine: () => { setShowDrawing(true); setDrawMode('line'); },
       onSaved: () => setTrenchVersion(v => v + 1),
+    },
+    /* Панель «ОКОПЫ (СТАТИЧЕСКИЕ ДАННЫЕ)» — тумблер видимости, счётчик и
+       фильтры типа/статуса; данные идут в OsirisMap через staticTrenches. */
+    staticTrenchesPanelProps: {
+      visible: !!activeLayers.trench_static,
+      onToggleVisible: () => setActiveLayers(prev => ({ ...prev, trench_static: !prev.trench_static })),
+      loading: staticTrenchesStore.loading,
+      error: staticTrenchesStore.error,
+      total: staticTrenchesStore.total,
+      visibleCount: staticTrenchesStore.visibleCount,
+      typesOn: staticTrenchesStore.typesOn,
+      statusesOn: staticTrenchesStore.statusesOn,
+      onToggleType: staticTrenchesStore.toggleType,
+      onToggleStatus: staticTrenchesStore.toggleStatus,
+      onResetFilters: staticTrenchesStore.resetFilters,
     },
   };
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({});
@@ -1620,6 +1642,7 @@ export default function Dashboard() {
           onDrawComplete={handleDrawComplete}
           drawnPolygons={drawnPolygons}
           aircraftAirports={aircraftAirports}
+          staticTrenches={activeLayers.trench_static ? staticTrenchesStore.filtered : null}
           onOiGlobe={handleOiGlobe}
           onOiSelect={handleOiSelect}
           onOiHover={setOiHover}
