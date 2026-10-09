@@ -2,7 +2,8 @@
  * OSIRISX — Rate Limiting (ограничитель частоты запросов)
  *
  * Скользящее окно на IP-адресе, хранится в памяти процесса.
- * По умолчанию: 10 запросов в минуту (требование ТЗ для модуля сканирования).
+ * По умолчанию: 25 запросов в минуту (актуальное требование ТЗ для модуля
+ * сканирования укреплений; исторический лимит 10/мин был пересмотрен).
  *
  * Примечание: в многинстансовой развёртке лимит применяется per-node;
  * при масштабировании заменить хранилище на Redis/LRU-кластер — интерфейс
@@ -13,6 +14,9 @@ import { NextRequest } from 'next/server';
 
 interface Window { hits: number[] }
 const buckets = new Map<string, Window>();
+
+/** Единый лимит модуля сканирования укреплений: 25 запросов в минуту. */
+export const RATE_LIMIT_PER_MINUTE = 25;
 
 /** Очистка устаревших ключей — защита от утечки памяти. */
 function sweep(now: number, windowMs: number) {
@@ -32,12 +36,12 @@ export interface RateResult {
 
 /**
  * Проверить лимит для ключа (обычно IP клиента).
- * @param limit  максимум запросов (по умолчанию 10)
+ * @param limit  максимум запросов (по умолчанию 25)
  * @param windowMs длительность окна в мс (по умолчанию 60 000 = 1 минута)
  */
 export function checkRateLimit(
   key: string,
-  limit = 10,
+  limit = RATE_LIMIT_PER_MINUTE,
   windowMs = 60_000,
   now = Date.now(),
 ): RateResult {
@@ -68,13 +72,13 @@ export function rateLimitResponse(res: RateResult): Response {
   return Response.json(
     {
       error: 'СЛИШКОМ МНОГО ЗАПРОСОВ',
-      detail: `Лимит: 10 запросов в минуту. Повторите попытку через ${seconds} с.`,
+      detail: `Лимит: ${RATE_LIMIT_PER_MINUTE} запросов в минуту. Повторите попытку через ${seconds} с.`,
     },
     {
       status: 429,
       headers: {
         'Retry-After': String(seconds),
-        'X-RateLimit-Limit': '10',
+        'X-RateLimit-Limit': String(RATE_LIMIT_PER_MINUTE),
         'X-RateLimit-Remaining': '0',
       },
     },

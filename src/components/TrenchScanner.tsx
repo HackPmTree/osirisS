@@ -13,7 +13,7 @@
  *
  * Сохранение — GeoJSON с пометкой type:'trench' (см. src/lib/trench-store.ts).
  * UI полностью на русском; тяжёлые запросы ограничены на сервере
- * (rate limit 10/мин) — клиент показывает понятное сообщение о лимите.
+ * (rate limit 25/мин) — клиент показывает понятное сообщение о лимите.
  */
 
 'use client';
@@ -125,7 +125,7 @@ export default function TrenchScanner({
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 429) {
-        setStatus({ kind: 'error', text: j?.detail || 'Лимит: 10 запросов в минуту.' });
+        setStatus({ kind: 'error', text: j?.detail || 'Лимит: 25 запросов в минуту.' });
         return;
       }
       if (!r.ok) {
@@ -171,7 +171,7 @@ export default function TrenchScanner({
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 429) {
-        setStatus({ kind: 'error', text: j?.detail || 'Лимит: 10 запросов в минуту.' });
+        setStatus({ kind: 'error', text: j?.detail || 'Лимит: 25 запросов в минуту.' });
         return;
       }
       if (!r.ok) {
@@ -269,7 +269,7 @@ export default function TrenchScanner({
         onClick={scan}
         disabled={status.kind === 'busy'}
         className="w-full flex items-center justify-center gap-1 rounded bg-[var(--bg-tertiary)] px-2 py-1.5 text-[10px] font-bold text-[var(--text-primary)] disabled:opacity-40"
-        title="CV-сканирование видимой области (лимит 10 зап./мин)"
+        title="CV-сканирование видимой области (лимит 25 зап./мин)"
       >
         <ScanLine className="w-3 h-3" /> Сканировать область
       </button>

@@ -9,20 +9,20 @@
  *           проставляется сервером принудительно.
  *  DELETE — удалить запись по id (?id=...).
  *
- * Безопасность: rate limiting 10 запросов/мин (см. src/lib/rate-limit.ts),
+ * Безопасность: rate limiting 25 запросов/мин (см. src/lib/rate-limit.ts),
  * валидация каждой координаты и лимиты длины строк (src/lib/trench-schema.ts).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { addTrench, deleteTrench, listTrenches, trenchesAsGeoJSON, type TrenchFeature } from '@/lib/trench-store';
 import { trenchCreateSchema, trenchDeleteSchema, trenchQuerySchema, zodErrorText } from '@/lib/trench-schema';
-import { checkRateLimit, clientKey, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, clientKey, rateLimitResponse, RATE_LIMIT_PER_MINUTE } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs'; // файловое хранилище требует Node.js runtime
 
-/** Общая проверка лимита: 10 запросов в минуту на клиента. */
+/** Общая проверка лимита: 25 запросов в минуту на клиента. */
 function guard(req: NextRequest): Response | null {
-  const res = checkRateLimit(clientKey(req), 10, 60_000);
+  const res = checkRateLimit(clientKey(req), RATE_LIMIT_PER_MINUTE, 60_000);
   return res.ok ? null : rateLimitResponse(res);
 }
 

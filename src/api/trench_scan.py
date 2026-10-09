@@ -54,6 +54,19 @@ class TrenchConfig:
     min_trench_length_m: float = 30.0    # короткие обрывки не рассматриваем (после склейки)
     max_valid_tortuosity: float = 4.0    # выше — это шум трассировки, а не зигзаг
     confidence_gate: float = 0.55        # порог отнесения к «окоп»
+    # ── Параметры предобработки кадра (шаг 0 пайплайна) ──
+    clahe_clip: float = 2.5              # коэффициент усиления CLAHE (тени траншей)
+    clahe_grid: int = 8                  # размер сетки локальной гистограммы CLAHE
+    blur_sigma: float = 0.9              # гауссово размытие до Canny (трава/камни)
+    canny_low_ratio: float = 0.6         # нижний порог Canny = медиана*(1-ratio)
+    canny_high_ratio: float = 1.4        # верхний порог Canny = медиана*(1+ratio)
+    morph_dilate_iter: int = 1           # дилатация краёв: соединение разрывов линии
+    morph_close_iter: int = 1            # морф. закрытие на карте тёмных полос
+    dark_band_factor: float = 0.85       # полоса тёмная, если яркость < фон*factor
+    # ── Теневой признак (окоп отбрасывает тень; дорога — нет) ──
+    shadow_delta: float = 18.0           # минимальный перепад яркости «вал vs тень», ед. серого
+    shadow_conf_bonus: float = 0.12      # прибавка за подтверждённую теневую структуру
+    candidate_gate: float = 0.35         # порог показа кандидата оператору (ниже gate)
 
 
 @dataclass
@@ -64,6 +77,8 @@ class SegmentMetrics:
     tortuosity: float = 1.0
     texture_std: float = 0.0
     parallel_borders_wide: bool = False  # чёткие параллельные границы большой ширины
+    shadow_ratio: float = 0.0            # доля профилей с теневым перепадом «вал/тень»
+    dark_ratio: float = 0.5              # доля тёмных пикселей внутри полосы
 
 
 @dataclass
@@ -144,6 +159,16 @@ def classify_segment(m: SegmentMetrics, cfg: TrenchConfig) -> Tuple[bool, float,
         reasons.append("Текстура не показывает взрыхлённого грунта вокруг линии")
         score -= 0.2
 
+    # Теневой признак: траншея узкая и ГЛУБОКАЯ — с одной стороны всегда
+    # светлый вал (выброс грунта), с другой тёмная стена (тень). У плоской
+    # дороги такой асимметрии нет. Это самый надёжный отличительный признак.
+    if m.shadow_ratio >= 0.6:
+        reasons.append(f"Теневая структура «вал/тень» подтверждена в {m.shadow_ratio:.0%} профилей")
+        score += cfg.shadow_conf_bonus
+    elif m.shadow_ratio <= 0.2 and not hard_reject:
+        reasons.append("Нет перепада «вал vs тень» — структура плоская, вероятна дорога/тропа")
+        score -= 0.35
+
     if m.length_m < cfg.min_trench_length_m:
         reasons.append("Сегмент слишком короткий — недостаточно данных")
         score -= 0.6
@@ -154,12 +179,19 @@ def classify_segment(m: SegmentMetrics, cfg: TrenchConfig) -> Tuple[bool, float,
 
 def measure_band_texture(gray, p0, p1, gsd_m: float, cfg: TrenchConfig):
     """
-    Измерить среднюю ширину тёмной полосы вдоль сегмента и шум текстуры.
+    Измерить среднюю ширину тёмной полосы вдоль сегмента, шум текстуры
+    и ТЕНЕВОЙ профиль (асимметрия «светлый вал vs тёмная стена»).
 
     Вдоль нормали к сегменту сканируется профиль яркости: ширина — по порогу
-    затемнения относительно среднего фона. Флаг «параллельные границы большой
-    ширины» ставится, если стабильно (>=70% профилей) ширина >= road_width_min.
-    texture_std — стандартное отклонение локальных градиентов внутри полосы.
+    затемнения относительно среднего фона (cfg.dark_band_factor). Флаг
+    «параллельные границы большой ширины» ставится, если стабильно (>=70%
+    профилей) ширина >= road_width_min. texture_std — стандартное отклонение
+    локальных градиентов внутри полосы.
+
+    Теневой признак: у настоящей траншеи на профиле яркости есть выраженный
+    светлый пик (вал выброса грунта) с одной стороны тёмной полосы и более
+    тёмный спад (стена в тени) с другой; перепад >= shadow_delta ед. серого.
+    У плоской дороги/грунтовки такой асимметрии нет → shadow_ratio низкий.
     """
     h, w = gray.shape
     x0, y0 = p0
@@ -170,8 +202,14 @@ def measure_band_texture(gray, p0, p1, gsd_m: float, cfg: TrenchConfig):
 
     widths: List[float] = []
     patches: List["np.ndarray"] = []
+    shadow_hits = 0
+    dark_ratios: List[float] = []
     steps = max(2, int(seg_len_px / 4))
-    mean_val = float(np.mean(gray))
+    # Локальный фон — медиана КАДОГО профиля отдельно. Глобальная медиана
+    # снимка непригодна: светлый вал траншеи сам сдвигает распределение
+    # яркостей, и порог «темнее фона» начинает захватывать полосу вала
+    # (завышенная ширина) или, наоборот, только дно (заниженная).
+    mean_val = float(np.median(gray))
 
     for t in range(0, steps + 1):
         cx = x0 + dx * t / steps
@@ -185,15 +223,48 @@ def measure_band_texture(gray, p0, p1, gsd_m: float, cfg: TrenchConfig):
         if len(prof) < 10:
             continue
         prof_arr = np.array(prof)
-        dark = prof_arr < mean_val * 0.85  # тёмная траншея на фоне грунта
-        widths.append(float(dark.sum()) * gsd_m)
-        ix, iy = int(round(cx)), int(round(cy))
-        if 5 <= ix < w - 5 and 5 <= iy < h - 5:
-            patches.append(gray[iy - 4:iy + 5, ix - 4:ix + 5].astype(np.float32))
+        local_bg = float(np.median(prof_arr))          # фон именно здесь
+        dark = prof_arr < local_bg * cfg.dark_band_factor  # тёмная траншея на фоне грунта
+        # ── Защита от «полосатого» профиля: если тёмных пикселей больше
+        #    половины окна, профиль не содержит выраженной полосы — ширина
+        #    ненадёжна, пропускаем такой замер.
+        frac = float(dark.sum()) / max(1, len(prof))
+        if 0.02 < frac <= 0.5:
+            widths.append(float(dark.sum()) * gsd_m)
+            dark_ratios.append(frac)
+    # ── Теневой анализ профиля: асимметрия ФОНОВ по обе стороны тёмной полосы.
+    #    У траншеи с одной стороны светлый вал (выброс грунта), с другой —
+    #    затенённая стена; перепад средних фонов >= shadow_delta ед. серого.
+    #    У плоской дороги/тропы оба края одинаковые → хит не растёт.
+    #    ВАЖНО: фон берётся МЕДИАНОЙ широкого окна (9 px) сразу за краем
+    #    полосы — среднее по 7 пикселям размывало узкий вал (2–3 px) шумом.
+    try:
+        idx = np.nonzero(dark)[0]
+        if idx.size >= 2:
+            lo_i, hi_i = int(idx[0]), int(idx[-1])
+            left_bg = prof_arr[max(0, lo_i - 9):max(1, lo_i)]
+            right_bg = prof_arr[min(len(prof_arr), hi_i + 1):min(len(prof_arr), hi_i + 10)]
+            if left_bg.size >= 3 and right_bg.size >= 3:
+                lmed, rmed = float(np.median(left_bg)), float(np.median(right_bg))
+                band_med = float(np.median(prof_arr[dark]))
+                # Вал должен быть СВЕТЛЕЕ дна минимум на shadow_delta, а
+                # противоположная сторона — темнее вала хотя бы вдвое меньше
+                # этого перепада (тень стены).
+                crest = max(lmed, rmed); trough_side = min(lmed, rmed)
+                if crest - band_med >= cfg.shadow_delta and crest - trough_side >= cfg.shadow_delta * 0.5:
+                    shadow_hits += 1
+    except Exception:
+        pass
+    ix, iy = int(round(cx)), int(round(cy))
+    if 5 <= ix < w - 5 and 5 <= iy < h - 5:
+        patches.append(gray[iy - 4:iy + 5, ix - 4:ix + 5].astype(np.float32))
 
     width_m = float(np.median(widths)) if widths else 0.0
     wide_ratio = sum(1 for wm in widths if wm >= cfg.road_width_min_m) / max(1, len(widths))
     parallel_wide = width_m >= cfg.road_width_min_m and wide_ratio >= 0.7
+    n_valid = max(1, len(widths))
+    shadow_ratio = shadow_hits / n_valid   # доля ПРОФИЛЕЙ С ПОЛОСОЙ, а не всех шагов
+    dark_ratio = float(np.mean(dark_ratios)) if dark_ratios else 0.5
 
     grads: List[float] = []
     for p in patches:
@@ -202,7 +273,7 @@ def measure_band_texture(gray, p0, p1, gsd_m: float, cfg: TrenchConfig):
         mag = np.sqrt(gx ** 2 + gy ** 2) / 255.0
         grads.append(float(np.std(mag)))
     texture_std = float(np.mean(grads)) if grads else 0.0
-    return width_m, texture_std, parallel_wide
+    return width_m, texture_std, parallel_wide, shadow_ratio, dark_ratio
 
 
 def _hough_segments(edges, cfg: TrenchConfig):
@@ -229,12 +300,21 @@ def trace_polyline(gray, edges, p0, p1, gsd_m: float, cfg: TrenchConfig):
     Превратить прямой отрезок Хафа в РЕАЛЬНУЮ ломаную трассу структуры.
 
     Идея: траншея тёмная и непрерывная — идём от начала к концу маленькими
-    шагами, на каждом шаге выбираем следующую точку внутри локального окна
-    так, чтобы яркость пикселя была минимальной (следование за тёмной полосой),
-    с ограничением угла поворота (чтобы не спрыгнуть на соседнюю структуру).
-    Результат — цепочка вершин; изломы этой цепочки и есть «зигзаг» окопа.
-    Для идеально прямой дороги цепочка остаётся прямой → фильтр формы её
-    корректно отсекает.
+    шагами; на каждом шаге внутри локального окна по нормали выбираем точку с
+    минимальной ЯРКОСТЬЮ (следим за самой тёмной полосой — дном траншеи или
+    краем дороги). Результат — цепочка вершин; изломы этой цепочки и есть
+    «зигзаг» окопа. Для идеально прямой дороги цепочка остаётся прямой →
+    фильтр формы её корректно отсекает.
+
+    Почему яркость, а не карта градиентов: у траншеи градиентные отклики
+    образуют ДВЕ параллельные линии (край вала / край тени), и трасса,
+    следующая за максимумом |∇I|, мечется между ними туда-сюда, порождая
+    фантомные развороты и невозможную извилистость. Тёмное дно — единый
+    непрерывный хребет, вести трассу по нему устойчиво.
+
+    Антидрожание: шаг вдоль трассы жёстко фиксирован, смещение ищется только
+    по нормали с инерцией (штраф за резкую смену offsets + экспоненциальное
+    сглаживание).
     """
     h, w = gray.shape
     x0, y0 = float(p0[0]), float(p0[1])
@@ -242,37 +322,32 @@ def trace_polyline(gray, edges, p0, p1, gsd_m: float, cfg: TrenchConfig):
     seg_len = math.hypot(x1 - x0, y1 - y0)
     if seg_len < 8:
         return [(x0, y0), (x1, y1)]
-    step = max(3.0, seg_len / 60.0)          # ~60 шагов вдоль трассы
-    win = max(4, int(round(1.5 * cfg.trench_width_max_m / max(gsd_m, 0.05))))  # окно поиска ±~7 м
+    step = max(3.0, seg_len / 60.0)                  # ~60 шагов вдоль трассы
+    win = max(4, int(round(1.5 * cfg.trench_width_max_m / max(gsd_m, 0.05))))  # окно ±~7 м
     n_steps = max(2, int(seg_len / step))
+    ux, uy = (x1 - x0) / seg_len, (y1 - y0) / seg_len  # единичный вектор трассы
+    nx, ny = -uy, ux                                   # нормаль — только по ней ищем смещение
 
     pts = [(x0, y0)]
-    direction = math.atan2(y1 - y0, x1 - x0)
-    cx, cy = x0, y0
+    last_off = 0.0                                     # предыдущее нормальное смещение
     for i in range(1, n_steps + 1):
-        tx = x0 + (x1 - x0) * i / n_steps     # целевая точка прямого отрезка
-        ty = y0 + (y1 - y0) * i / n_steps
-        best_val, bx, by = None, tx, ty
-        ix0, iy0 = int(tx), int(ty)
-        for dy in range(-win, win + 1):
-            for dx in range(-win, win + 1):
-                px, py = ix0 + dx, iy0 + dy
-                if not (0 <= px < w and 0 <= py < h):
-                    continue
-                ang = math.atan2(py - cy, px - cx)
-                diff = abs((ang - direction + math.pi) % (2 * math.pi) - math.pi)
-                if diff > 1.0:                 # запрет резких разворотов (>~57°)
-                    continue
-                val = float(gray[py, px])
-                if best_val is None or val < best_val:
-                    best_val, bx, by = val, px, py
-        new_dir = math.atan2(by - cy, bx - cx)
-        # сглаживание направления (экспоненциальное), чтобы трасса не дрожала
-        sin_d = 0.6 * math.sin(direction) + 0.4 * math.sin(new_dir)
-        cos_d = 0.6 * math.cos(direction) + 0.4 * math.cos(new_dir)
-        direction = math.atan2(sin_d, cos_d)
-        cx, cy = float(bx), float(by)
-        pts.append((cx, cy))
+        bx = x0 + ux * step * i                        # базовая точка строго вперёд
+        by = y0 + uy * step * i
+        best_val, off = None, 0.0
+        ix0, iy0 = int(round(bx)), int(round(by))
+        for d in range(-win, win + 1):                 # смещение ТОЛЬКО по нормали
+            px, py = ix0 + int(round(nx * d)), iy0 + int(round(ny * d))
+            if not (0 <= px < w and 0 <= py < h):
+                continue
+            val = float(gray[py, px])                  # следим за тёмным дном полосы
+            # штраф за резкую смену смещения: трасса идёт гладко, инерция ±2 px
+            cost = val + abs(d - last_off) * 0.6
+            if best_val is None or cost < best_val:
+                best_val, off = cost, d
+        cxp, cyp = bx + nx * off, by + ny * off
+        # сглаживание смещения (экспоненциальное), чтобы трасса не дрожала
+        last_off = 0.6 * last_off + 0.4 * off
+        pts.append((cxp, cyp))
 
     # Упрощение цепочки: оставляем только значимые изломы (Douglas-Peucker)
     def rdp(points, eps):
@@ -311,10 +386,13 @@ def polyline_metrics(coords_px, gray, gsd_m: float, cfg: TrenchConfig) -> Segmen
         d = abs((a2 - a1 + math.pi) % (2 * math.pi) - math.pi)
         max_turn = max(max_turn, d)
     widths, textures, wide_hits = [], [], 0
+    shadow_ratios, dark_ratios = [], []
     for (xa, ya), (xb, yb) in zip(px, px[1:]):
-        wm, tex, wide = measure_band_texture(gray, (int(xa), int(ya)), (int(xb), int(yb)), gsd_m, cfg)
+        wm, tex, wide, sh_ratio, dk_ratio = measure_band_texture(
+            gray, (int(xa), int(ya)), (int(xb), int(yb)), gsd_m, cfg)
         if wm > 0:
             widths.append(wm); textures.append(tex); wide_hits += 1 if wide else 0
+            shadow_ratios.append(sh_ratio); dark_ratios.append(dk_ratio)
     return SegmentMetrics(
         length_m=length_m,
         width_m=float(np.median(widths)) if widths else 0.0,
@@ -322,6 +400,8 @@ def polyline_metrics(coords_px, gray, gsd_m: float, cfg: TrenchConfig) -> Segmen
         tortuosity=tortuosity,
         texture_std=float(np.mean(textures)) if textures else 0.0,
         parallel_borders_wide=(wide_hits >= 0.7 * len(widths)) if widths else False,
+        shadow_ratio=float(np.mean(shadow_ratios)) if shadow_ratios else 0.0,
+        dark_ratio=float(np.mean(dark_ratios)) if dark_ratios else 0.5,
     )
 
 
@@ -381,21 +461,54 @@ def merge_traces(traces):
     return chains
 
 
+def preprocess_frame(img, cfg: TrenchConfig):
+    """
+    Шаг 0 пайплайна (предобработка по ТЗ):
+      1) оттенки серого;
+      2) CLAHE — усиление локального контраста (тени траншей становятся читаемы);
+      3) гауссово размытие — подавление мелкого шума (трава, камни);
+      4) Canny с ПОРОГАМИ ОТ МЕДИАНЫ (адаптивные к снимку) + морфология
+         (dilate/close) для соединения разрывов линии окопа.
+
+    Возвращает (gray_for_metrics, edges). Метрики яркости снимаются с gray ДО
+    CLAHE — иначе усиленный контраст завысил бы и ширину, и теневой профиль.
+    """
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Мягкое подавление солёного-перцевого шума без размывания траншей
+    gray = cv2.medianBlur(gray, 3)
+
+    clahe = cv2.createCLAHE(clipLimit=cfg.clahe_clip, tileGridSize=(cfg.clahe_grid, cfg.clahe_grid))
+    enhanced = clahe.apply(gray)
+    blurred = cv2.GaussianBlur(enhanced, (3, 3), cfg.blur_sigma)
+
+    v = float(np.median(blurred))
+    lo = max(5, int((1.0 - cfg.canny_low_ratio) * v))
+    hi = int((1.0 + cfg.canny_high_ratio) * v)
+    edges = cv2.Canny(blurred, lo, hi)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    edges = cv2.dilate(edges, kernel, iterations=cfg.morph_dilate_iter)
+    # Морфологическое закрытие на карте тёмных полос: соединяет разрывы
+    dark_mask = cv2.morphologyEx(
+        (blurred < v * 0.8).astype(np.uint8) * 255,
+        cv2.MORPH_CLOSE, kernel, iterations=cfg.morph_close_iter)
+    edges = cv2.bitwise_or(edges, cv2.Canny(dark_mask, 30, 90))
+    return gray, edges
+
+
 def detect_segments(img, gsd_m: float, cfg: TrenchConfig,
                     bbox: Tuple[float, float, float, float]) -> List["TrenchCandidate"]:
     """
     Шаг 1 пайплайна: детекция линейных структур на снимке.
 
-    Canny → HoughLinesP → трассировка ломаной каждого отрезка → СКЛЕЙКА
-    соосных осколков в единые трассы (иначе реальный окоп рассыпается на
-    15-метровые фрагменты и бракуется по длине) → метрики ширины/формы/
-    текстуры → строгий фильтр «окоп vs дорога» (classify_segment).
-    Пиксельные координаты переводятся в географические по bbox.
+    Предобработка (CLAHE+blur+Canny+морфология) → HoughLinesP → трассировка
+    ломаной каждого отрезка → СКЛЕЙКА соосных осколков в единые трассы (иначе
+    реальный окоп рассыпается на 15-метровые фрагменты и бракуется по длине) →
+    метрики ширины/формы/текстуры/тени → строгий фильтр «окоп vs дорога»
+    (classify_segment). Пиксельные координаты переводятся в географические по
+    bbox.
     """
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Мягкое подавление солёного-перцевого шума без размывания траншей
-    gray = cv2.medianBlur(gray, 3)
-    edges = cv2.Canny(gray, 50, 140)
+    gray, edges = preprocess_frame(img, cfg)
 
     min_lon, min_lat, max_lon, max_lat = bbox
     h, w = gray.shape
@@ -445,26 +558,41 @@ def scan(image_path: str, bbox: Tuple[float, float, float, float],
 
     cands = detect_segments(img, gsd_m, cfg, bbox)
     trenches = [c for c in cands if c.is_trench]
+    # Кандидаты: не прошли строгий порог, но достаточно интересны, чтобы их
+    # показал оператору на карте (зелёным пунктиром) для визуальной проверки.
+    review = [c for c in cands if not c.is_trench and c.confidence >= cfg.candidate_gate]
 
-    features = [{
-        "type": "Feature",
-        "geometry": {"type": "LineString", "coordinates": [list(p) for p in c.coords_lonlat]},
-        "properties": {
-            "osiris_type": "trench",
-            "confidence": c.confidence,
-            "length_m": round(c.metrics.length_m, 1),
-            "width_m": round(c.metrics.width_m, 2),
-            "tortuosity": round(c.metrics.tortuosity, 3),
-            "texture_std": round(c.metrics.texture_std, 4),
-            "reasons_ru": c.reasons,
-        },
-    } for c in trenches]
+    def to_feature(c: "TrenchCandidate") -> dict:
+        return {
+            "type": "Feature",
+            "geometry": {"type": "LineString", "coordinates": [list(p) for p in c.coords_lonlat]},
+            "properties": {
+                "osiris_type": "trench",
+                "confidence": c.confidence,
+                "length_m": round(c.metrics.length_m, 1),
+                "width_m": round(c.metrics.width_m, 2),
+                "tortuosity": round(c.metrics.tortuosity, 3),
+                "texture_std": round(c.metrics.texture_std, 4),
+                "shadow_ratio": round(c.metrics.shadow_ratio, 2),
+                "reasons_ru": c.reasons,
+            },
+        }
+
+    features = [to_feature(c) for c in trenches]
 
     return {
         "scanned_segments": len(cands),
         "trenches_detected": len(trenches),
-        "rejected_as_road_or_powerline": len(cands) - len(trenches),
+        "rejected_as_road_or_powerline": len(cands) - len(trenches) - len(review),
         "geojson": {"type": "FeatureCollection", "features": features},
+        # Предварительный результат для отрисовки зелёным пунктиром (требует
+        # подтверждения оператором; в хранилище НЕ пишется без подтверждения).
+        "candidates_geojson": {
+            "type": "FeatureCollection",
+            "features": [dict(to_feature(c), properties={**to_feature(c)["properties"],
+                                                          "needs_review": True})
+                         for c in review],
+        },
         "disclaimer": "Только OSINT-обнаружение изменений ландшафта; тактическое целеуказание не предоставляется.",
     }
 
