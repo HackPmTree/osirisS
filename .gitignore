@@ -1,9 +1,2 @@
-# Python
-__pycache__/
-*.pyc
-
-# Node.js / Dependencies
-node_modules/
-
-# Build Artifacts & Caches
+# Build artifacts
 tsconfig.tsbuildinfo

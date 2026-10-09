@@ -46,6 +46,10 @@ interface TrenchScannerProps {
   onStartDrawLine?: () => void;
   /** Оповестить родителя об изменении слоя (чтобы карта перезагрузила окопы). */
   onSaved?: () => void;
+  /** Показать кандидаты автоскана на карте зелёным пунктиром (нужен подтверждающий слой). */
+  onCandidates?: (geojson: unknown) => void;
+  /** Подтвердить/отклонить кандидатов пакетом после ответа сканера. */
+  onScanDone?: () => void;
 }
 
 type Status = { kind: 'idle' | 'busy' | 'ok' | 'error'; text: string };
@@ -80,11 +84,13 @@ function lengthM(points: [number, number][]): number {
 }
 
 export default function TrenchScanner({
-  center, zoom, shapes = [], onStartDrawLine, onSaved,
+  center, zoom, shapes = [], onStartDrawLine, onSaved, onCandidates,
 }: TrenchScannerProps) {
   const [status, setStatus] = useState<Status>({ kind: 'idle', text: '' });
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [rows, setRows] = useState<TrenchRow[]>([]);
+  /* Кандидаты последнего автоскана (нужны для подтверждения оператором). */
+  const [candidates, setCandidates] = useState<any[]>([]);
 
   /* ── Загрузка сохранённых укреплений для списка ───────────────────── */
   const refresh = useCallback(async () => {
@@ -157,9 +163,9 @@ export default function TrenchScanner({
     }
   }, [center, zoom, lineShapes, onSaved, refresh]);
 
-  /* ── Автоскан видимой области (OpenCV-движок или эвристика) ───────── */
+  /* ── Автоскан видимой области (OpenCV-движок или встроенный растровый) ── */
   const scan = useCallback(async () => {
-    setStatus({ kind: 'busy', text: 'Сканирование области…' });
+    setStatus({ kind: 'busy', text: 'Сканирование спутникового снимка…' });
     const half = Math.min(0.25, 3 / Math.max(1, zoom));
     const [lat, lon] = center;
     const bbox = [lon - half, lat - half, lon + half, lat + half];
@@ -167,7 +173,10 @@ export default function TrenchScanner({
       const r = await fetch('/api/trench-scan', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ bbox, autosave: true }),
+        /* autosave=false: автоскан НИЧЕГО не пишет в слой — только находит
+           кандидатов. В хранилище попадают лишь линии, подтверждённые
+           оператором кнопкой «Подтвердить». Это исключает ложные окопы. */
+        body: JSON.stringify({ bbox, autosave: false }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.status === 429) {
@@ -178,27 +187,77 @@ export default function TrenchScanner({
         setStatus({ kind: 'error', text: j?.detail || j?.error || `Ошибка сканирования (${r.status}).` });
         return;
       }
+      /* Кандидаты для зелёного пунктира на карте (нужен подтверждающий слой). */
+      const cands: any[] = j?.candidates_geojson?.features ?? [];
+      setCandidates(cands);
+      onCandidates?.(j?.candidates_geojson ?? { type: 'FeatureCollection', features: [] });
       const n = Array.isArray(j?.geojson?.features) ? j.geojson.features.length : 0;
       const scannedCount = j?.scanned_segments ?? j?.scanned ?? 0;
-      
-      let autoReport = `Обнаружено кандидатов: ${scannedCount}. Подтверждено окопов: ${n}.`;
+
+      let autoReport = `Проанализировано структур: ${scannedCount}. Подтверждённых окопов: ${n}. Кандидатов на проверку: ${cands.length}.`;
       if (j?.engine === 'python-opencv') {
-        autoReport += '\nДвижок: OpenCV (полный пайплайн — ширина, зигзаг, текстура).';
+        autoReport += '\nДвижок: OpenCV (CLAHE → Canny → ширина/зигзаг/текстура/тень вала).';
+      } else if (j?.engine === 'js-raster-lite') {
+        autoReport += '\nДвижок: встроенный растровый детектор по снимку Esri World_Imagery.';
       } else {
-        autoReport += '\nДвижок: локальная эвристика (только геометрия линий без анализа снимков).';
-        if (n === 0 && scannedCount > 0) {
-          autoReport += '\n⚠️ Все кандидаты отбракованы как "дороги/ЛЭП" (слишком прямые или широкие).';
-        }
+        autoReport += '\n⚠️ Спутниковый кадр недоступен — автоскан не выполнялся.';
       }
-      
+      if (cands.length > 0) {
+        autoReport += '\nКандидаты показаны ЗЕЛЁНЫМ ПУНКТИРОМ. Проверьте их визуально и нажмите «Подтвердить», чтобы сохранить как окопы.';
+      }
+
       setScanResult(autoReport);
-      setStatus({ kind: 'ok', text: n > 0 ? 'Найдены укрепления!' : 'Сканирование завершено. Окопов не обнаружено.' });
+      setStatus({
+        kind: 'ok',
+        text: cands.length > 0 || n > 0
+          ? 'Сканирование завершено — проверьте кандидатов на карте.'
+          : 'Сканирование завершено. Окопов не обнаружено.',
+      });
       await refresh();
       onSaved?.();
     } catch {
       setStatus({ kind: 'error', text: 'Сервер недоступен. Попробуйте позже.' });
     }
-  }, [center, zoom, onSaved, refresh]);
+  }, [center, zoom, onSaved, onCandidates, refresh]);
+
+  /* ── Подтверждение кандидата: зелёный пунктир → сохранённый окоп ──── */
+  const confirmCandidate = useCallback(async (feature: any) => {
+    const coords: [number, number][] = feature?.geometry?.coordinates ?? [];
+    if (coords.length < 2) return;
+    try {
+      const r = await fetch('/api/trenches', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: `trench-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          type: 'trench',
+          name: 'Окоп (AI, подтверждён)',
+          source: 'ai_detected',
+          geometry: { type: 'LineString', coordinates: coords },
+          confidence: feature?.properties?.confidence ?? undefined,
+        }),
+      });
+      if (!r.ok) {
+        setStatus({ kind: 'error', text: 'Не удалось сохранить подтверждённый окоп.' });
+        return;
+      }
+      const nextCands = candidates.filter((c) => c !== feature);
+      setCandidates(nextCands);
+      onCandidates?.({ type: 'FeatureCollection', features: nextCands });
+      setStatus({ kind: 'ok', text: 'Окоп подтверждён и сохранён в слой укреплений.' });
+      await refresh();
+      onSaved?.();
+    } catch {
+      setStatus({ kind: 'error', text: 'Сервер недоступен.' });
+    }
+  }, [candidates, onCandidates, onSaved, refresh]);
+
+  /* ── Отклонить всех кандидатов (скрыть пунктир без сохранения) ─────── */
+  const rejectAll = useCallback(() => {
+    setCandidates([]);
+    onCandidates?.({ type: 'FeatureCollection', features: [] });
+    setStatus({ kind: 'idle', text: 'Все кандидаты отклонены (не сохранены).' });
+  }, [onCandidates]);
 
   /* ── Удаление записи ──────────────────────────────────────────────── */
   const remove = useCallback(async (id?: string) => {

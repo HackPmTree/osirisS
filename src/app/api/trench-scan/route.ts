@@ -204,23 +204,72 @@ export async function POST(req: NextRequest) {
   }
   const { bbox, resolutionPx, autosave } = parsed.data;
 
-  /* ── 1. Тяжёлый CV-пайплайн: внешний Python-движок OpenCV (лучшее качество) */
-  const engineUrl = process.env.TRENCH_ENGINE_URL;
-  if (engineUrl) {
-    try {
-      const r = await fetch(`${engineUrl.replace(/\/$/, '')}/scan`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ bbox, resolutionPx }),
-        signal: AbortSignal.timeout(25_000),
-      });
-      if (r.ok) {
-        const data = await r.json();
-        return NextResponse.json({ ...data, engine: 'python-opencv' });
+  /* ── 1. Тяжёлый CV-пайплайн: внешний Python-движок OpenCV (лучшее качество).
+         Если TRENCH_ENGINE_URL не задан в .env.local, движок ищется на
+         стандартном локальном порту 8790 — чтобы запущенный
+         `python src/api/trench_engine.py` работал сразу без настройки env. ── */
+  const engineUrl = process.env.TRENCH_ENGINE_URL || 'http://127.0.0.1:8790';
+  try {
+    const r = await fetch(`${engineUrl.replace(/\/$/, '')}/scan`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ bbox, resolutionPx }),
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (r.ok) {
+      const data = await r.json();
+      /* Конвертация формата движка в единый контракт фронтенда:
+         geojson.features          → подтверждённые окопы (features[])
+         candidates_geojson.features → кандидаты для зелёного пунктира
+         Ответ содержит ИСХОДНЫЕ ключи движка + нормализованные features/geojson. */
+      const confirmed: Record<string, unknown>[] = (data?.geojson?.features ?? []).map((f: any) => ({
+        geometry: { type: 'Feature', geometry: f.geometry, properties: f.properties },
+        is_trench: true,
+        needs_review: false,
+        confidence: f.properties?.confidence ?? 0.7,
+        reasons_ru: f.properties?.reasons_ru ?? [],
+        length_m: f.properties?.length_m ?? null,
+        width_m: f.properties?.width_m ?? null,
+        source: 'cv-scan',
+      }));
+      const candidates: Record<string, unknown>[] = (data?.candidates_geojson?.features ?? []).map((f: any) => ({
+        geometry: { type: 'Feature', geometry: f.geometry, properties: f.properties },
+        is_trench: false,
+        needs_review: true,
+        confidence: f.properties?.confidence ?? 0.4,
+        reasons_ru: f.properties?.reasons_ru ?? [],
+        length_m: f.properties?.length_m ?? null,
+        width_m: f.properties?.width_m ?? null,
+        source: 'cv-scan',
+      }));
+      /* autosave: только уверенные подтверждения движка (conf ≥ 0.55) */
+      if (autosave) {
+        for (const res of confirmed.filter((c) => Number(c.confidence) >= 0.55)) {
+          const g = (res.geometry as { geometry: { coordinates: [number, number][] } }).geometry.coordinates;
+          const feature: TrenchFeature = {
+            id: `trench-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+            type: 'trench',
+            name: 'Окоп (AI-скан)',
+            source: 'ai_detected',
+            geometry: { type: 'Feature', geometry: { type: 'LineString', coordinates: g }, properties: {} },
+            lengthKm: ((res.length_m as number) ?? 0) / 1000,
+            confidence: res.confidence as number,
+            createdAt: Date.now(),
+          };
+          try { await addTrench(feature); } catch { /* дубликат/ошибка — пропускаем */ }
+        }
       }
-    } catch {
-      /* Движок недоступен — переходим к встроенному растровому детектору. */
+      return NextResponse.json({
+        ...data,
+        engine: 'python-opencv',
+        scanned: data?.scanned_segments ?? 0,
+        features: [...confirmed, ...candidates],
+        geojson: { type: 'FeatureCollection', features: confirmed.map((c) => c.geometry) },
+        candidates_geojson: { type: 'FeatureCollection', features: candidates.map((c) => c.geometry) },
+      });
     }
+  } catch {
+    /* Движок недоступен — переходим к встроенному растровому детектору. */
   }
 
   /* ── 2. Встроенный растровый детектор: скачиваем РЕАЛЬНЫЙ спутниковый кадр
@@ -306,7 +355,7 @@ export async function POST(req: NextRequest) {
         id: `trench-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         type: 'trench',
         name: 'Окоп (автоскан)',
-        source: 'cv-scan',
+        source: 'ai_detected',
         geometry: { type: 'Feature', geometry: { type: 'LineString', coordinates: g }, properties: {} },
         lengthKm: (res.length_m as number) / 1000,
         confidence: res.confidence as number,
