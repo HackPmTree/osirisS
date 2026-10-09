@@ -3202,7 +3202,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     });
   }, [mapReady, arcgisLayers]);
 
-  // ── TRENCHES STATIC LAYER (окопы из /public/data/trenches.geojson) ──
+  // ── TRENCHES LAYER (окопы: демо-файл /public/data/trenches.geojson +
+  // реально просканированные/сохранённые объекты из хранилища /api/trenches) ──
   // Рендер целиком через source+layers MapLibre: никаких DOM-элементов на
   // объект (ТЗ §4.5). Фильтры панели приходят уже отфильтрованным FC —
   // повторный вызов addTrenchesLayers делает только setData().
@@ -3244,6 +3245,10 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const statusRu = TRENCH_STATUS_LABEL_RU[p?.status as TrenchStatus] ?? '—';
       const lenM = typeof p?.length_m === 'number' ? `${Math.round(p.length_m)} м` : '—';
       const conf = typeof p?.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '—';
+      /* Откуда объект: честно показываем демо-данные vs реально обнаруженные. */
+      const originRu = p?.origin === 'scanned'
+        ? 'Обнаружено сканером / сохранено оператором'
+        : 'Демо-разметка (файл trenches.geojson)';
       const color = esc(p?.color || '#e63946');
       return `<div style="background:rgba(12,14,26,0.95);backdrop-filter:blur(16px);border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#E8E6E0;border:1px solid ${color}55;min-width:220px;">
         <div style="font-size:12px;letter-spacing:0.08em;color:${color};margin-bottom:6px;">▮ ${esc(typeRu)}</div>
@@ -3252,6 +3257,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
           <tr><td style="color:rgba(255,255,255,0.4);">Длина</td><td>${esc(lenM)}</td></tr>
           <tr><td style="color:rgba(255,255,255,0.4);">Достоверность</td><td>${esc(conf)}</td></tr>
           <tr><td style="color:rgba(255,255,255,0.4);">Источник</td><td>${esc(p?.source || '—')}</td></tr>
+          <tr><td style="color:rgba(255,255,255,0.4);">Происхождение</td><td style="font-size:10px;">${esc(originRu)}</td></tr>
         </table>
         ${p?.notes ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);">${esc(p.notes)}</div>` : ''}
         <div style="margin-top:6px;font-size:8.5px;letter-spacing:0.18em;color:rgba(255,255,255,0.3);">${esc(p?.id || '')}</div>

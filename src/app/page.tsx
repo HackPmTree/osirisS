@@ -340,9 +340,11 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, [trenchVersion]);
 
-  /* ── Статический слой «Окопы (данные)»: /data/trenches.geojson, только
+  /* ── Статический слой «Окопы (данные)»: демо-файл /data/trenches.geojson +
+     реально просканированные укрепления из хранилища сканера (/api/trenches,
+     перечитывается по trenchVersion после сохранения/удаления). Только
      просмотр (ТЗ). Видимость — в activeLayers.trench_static, фильтры — здесь. ── */
-  const staticTrenchesStore = useTrenches();
+  const staticTrenchesStore = useTrenches(trenchVersion);
 
   // ── GEO-IMPORT handlers: add/remove imported layers and fly to their extent ──
   const handleImportAdd = useCallback((layer: ImportedLayer) => {
@@ -680,6 +682,8 @@ export default function Dashboard() {
       loading: staticTrenchesStore.loading,
       error: staticTrenchesStore.error,
       total: staticTrenchesStore.total,
+      demoCount: staticTrenchesStore.demoCount,
+      scannedCount: staticTrenchesStore.scannedCount,
       visibleCount: staticTrenchesStore.visibleCount,
       typesOn: staticTrenchesStore.typesOn,
       statusesOn: staticTrenchesStore.statusesOn,

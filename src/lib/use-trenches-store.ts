@@ -1,11 +1,18 @@
 /**
- * OSIRIS — Состояние слоя «Окопы» (статический GeoJSON).
+ * OSIRIS — Состояние слоя «Окопы» (укрепления).
  *
  * В проекте нет Zustand/Redux: слои живут в useState страницы (page.tsx),
  * поэтому здесь — локальный хук с той же ролью, что store: видимость
- * слоя, активные фильтры типа/статуса и загрузка данных из файла.
- * Фильтры применяются на клиенте setData() — карта остаётся единственным
- * рендерером объектов (ТЗ: никаких React-компонентов на каждый окоп).
+ * слоя, активные фильтры типа/статуса и загрузка данных.
+ *
+ * Источники (оба реальные, честная маркировка origin):
+ *  • /data/trenches.geojson — демонстрационный файл (ДЕМО);
+ *  • GET /api/trenches — хранилище сканера: окопы, реально обнаруженные
+ *    CV-сканированием или сохранённые оператором вручную (СКАНЕР).
+ * Данные сканера перечитываются по сигналу `scannerVersion` (растёт после
+ * сохранения/удаления в модуле «Картограф укреплений»).
+ * Фильтры применяются на клиенте — карта остаётся единственным
+ * рендерером объектов (никаких React-компонентов на каждый окоп).
  */
 
 'use client';
@@ -23,13 +30,16 @@ import {
 export const TRENCH_DATA_URL = '/data/trenches.geojson';
 
 export interface UseTrenchesResult {
-  /** Все данные из файла (после нормализации). */
+  /** Все данные из обоих источников (после нормализации). */
   data: StaticTrenchFC | null;
   loading: boolean;
   /** Ошибка загрузки/разбора — панель покажет понятное сообщение. */
   error: string | null;
-  /** Всего объектов в файле. */
+  /** Всего объектов в обоих источниках. */
   total: number;
+  /** Из них — демо-файл и хранилище сканера (для честных счётчиков панели). */
+  demoCount: number;
+  scannedCount: number;
   /** Объектов после фильтра. */
   visibleCount: number;
   typesOn: Set<TrenchType>;
@@ -41,9 +51,11 @@ export interface UseTrenchesResult {
   filtered: StaticTrenchFC;
 }
 
-/** Хук-«стор» слоя окопов: загрузка + фильтры. */
-export function useTrenches(): UseTrenchesResult {
+/** Хук-«стор» слоя окопов: загрузка обоих источников + фильтры. */
+export function useTrenches(scannerVersion = 0): UseTrenchesResult {
   const [raw, setRaw] = useState<unknown>(null);
+  /* GeoJSON из хранилища сканера (/api/trenches) — обновляется по scannerVersion. */
+  const [scannedRaw, setScannedRaw] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [typesOn, setTypesOn] = useState<Set<TrenchType>>(() => new Set(ALL_TRENCH_TYPES));
@@ -60,7 +72,23 @@ export function useTrenches(): UseTrenchesResult {
     return () => { cancelled = true; };
   }, []);
 
-  const data = useMemo(() => prepareStaticTrenches(raw), [raw]);
+  /* Загрузка сохранённых (просканированных) укреплений из хранилища сканера.
+     Ошибка не фатальна: сервер может быть недоступен — слой тогда показывает
+     только демо-данные, а сканер сообщает о проблеме сам. */
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/trenches', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j?.geojson) setScannedRaw(j.geojson); })
+      .catch(() => { /* хранилище недоступно — работаем без него */ });
+    return () => { cancelled = true; };
+  }, [scannerVersion]);
+
+  const data = useMemo(() => {
+    const demo = prepareStaticTrenches(raw, 'demo-file');
+    const scanned = prepareStaticTrenches(scannedRaw, 'scanned');
+    return { type: 'FeatureCollection' as const, features: [...demo.features, ...scanned.features] };
+  }, [raw, scannedRaw]);
 
   const filtered = useMemo(
     () => ({
@@ -99,6 +127,8 @@ export function useTrenches(): UseTrenchesResult {
     loading,
     error,
     total: data.features.length,
+    demoCount: data.features.filter((f) => f.properties.origin !== 'scanned').length,
+    scannedCount: data.features.filter((f) => f.properties.origin === 'scanned').length,
     visibleCount: filtered.features.length,
     typesOn,
     statusesOn,
