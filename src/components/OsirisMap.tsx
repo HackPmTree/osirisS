@@ -22,6 +22,7 @@ import { attachTerrain, type TerrainStatus } from '@/lib/map-terrain';
 
 import { applyMapProjection } from '@/lib/map-projection';
 import { addTrenchesLayers, removeTrenchesLayers, TRENCH_SRC } from '@/components/layers/TrenchesLayer';
+import LeafletFallback, { WebGLFallbackBanner } from '@/components/map/LeafletFallback';
 import { TRENCH_STATUS_LABEL_RU, TRENCH_TYPE_LABEL_RU, type TrenchStatus, type TrenchType } from '@/types/trench';
 
 /** The catalogue fields the satellite layer and its popup actually read. */
@@ -415,6 +416,21 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       console.error('[OSIRIS] Map could not start on this machine:', lastError instanceof Error ? lastError.message : lastError);
       return;
     }
+
+    /* MapLibre бросает GPUInitializationError АСИНХРОННО: конструктор может
+       пройти, а гибель контекста прийти событием 'error' (llvmpipe/ANGLE на
+       Linux+Mesa, WSL2 — случай "BindToCurrentSequence failed"). Ловим её и
+       переключаемся на Leaflet-режим совместимости, пока карта не успела
+       отрисовать ни единого кадра. Условие !mapRef.current гарантирует, что
+       после успешного 'load' (там mapRef заполняется) случайные сетевые
+       ошибки тайлов сюда не попадают. */
+    map.on('error', (ev: any) => {
+      const msg = String(ev?.error?.message ?? ev?.message ?? '');
+      if (!mapRef.current && (/GPUInitialization/i.test(String(ev?.error?.name ?? '')) || /WebGL/i.test(msg))) {
+        console.error('[OSIRIS] WebGL context died during boot, switching to Leaflet fallback:', msg);
+        setWebglUnavailable(true);
+      }
+    });
 
     map.on('load', () => {
       mapRef.current = map;
@@ -3532,35 +3548,41 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     return () => { map.off('zoomend', onZoom); };
   }, [mapReady, selectedSat, clearSat]);
 
+  /* ── РЕЖИМ СОВМЕСТИМОСТИ (без WebGL) ──────────────────────────────────
+     Если MapLibre не смог создать WebGL-контекст (Linux + llvmpipe/Mesa,
+     WSL2, старые GPU), вместо чёрного прямоугольника рендерится Leaflet —
+     Canvas/SVG/DOM, WebGL не нужен. Панели, фильтры и клик по объектам
+     продолжают работать; недоступные без WebGL слои (спутник-3D, живые
+     облака, OI-глобус, террейн, CCTV/Live-News превью) скрыты — их список
+     в LeafletMap.UNSUPPORTED_LAYERS, баннер предупреждает пользователя. */
+  if (webglUnavailable) {
+    return (
+      <>
+        <LeafletFallback
+          data={data}
+          activeLayers={activeLayers}
+          staticTrenches={staticTrenches}
+          drawnPolygons={drawnPolygons}
+          route={route}
+          userLocation={userLocation}
+          flyToLocation={flyToLocation}
+          onEntityClick={onEntityClick}
+          onMouseCoords={onMouseCoords}
+          onRightClick={onRightClick}
+          onViewStateChange={onViewStateChange}
+          onMapCenter={onMapCenter}
+          onReady={onReady}
+        />
+        <WebGLFallbackBanner />
+      </>
+    );
+  }
+
   return (
     <>
       {/* Карта — «фон» интерфейса: z-index 0, чтобы панели и кнопки
           (LayerPanel z-[100], OsintPanel z-[999]) лежали поверх неё. */}
       <div ref={containerRef} className="absolute inset-0 z-0 w-full h-full" />
-      {webglUnavailable && (
-        <div className="absolute inset-0 z-[1] flex items-center justify-center bg-black/60 p-4">
-          <div className="max-w-md border border-[#e63946]/50 bg-[#0b0b0b]/95 p-5 font-mono text-xs text-[#c8c8c8] shadow-lg">
-            <div className="mb-2 text-sm tracking-widest text-[#e63946]">⚠ КАРТА НЕДОСТУПНА</div>
-            <p className="mb-2 leading-relaxed">
-              Этот браузер не смог создать WebGL-контекст — карта не может отрисоваться.
-              Остальные панели OSIRIS (разведданные, сканер окопов, поиск) работают как обычно.
-            </p>
-            <p className="mb-2 leading-relaxed text-[#8a8a8a]">Что попробовать:</p>
-            <ul className="list-disc space-y-1 pl-5 text-[#8a8a8a]">
-              <li>Включить аппаратное ускорение в настройках браузера и перезапустить его;</li>
-              <li>Обновить браузер и драйвер видеокарты;</li>
-              <li>Запустить с флагом <code className="text-[#ffd166]">--ignore-gpu-blocklist</code> или разрешить программный рендеринг (SwiftShader/llvmpipe);</li>
-              <li>Проверить поддержку на webglreport.com/?v=2.</li>
-            </ul>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 border border-[#e63946]/60 px-4 py-1.5 tracking-widest text-[#e63946] transition-colors hover:bg-[#e63946]/10"
-            >
-              ПЕРЕЗАПУСТИТЬ
-            </button>
-          </div>
-        </div>
-      )}
       {mapReady && mapRef.current && (
         <CctvPreviews
           mapRef={mapRef}

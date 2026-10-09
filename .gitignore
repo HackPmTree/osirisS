@@ -1,2 +1,5 @@
-# TypeScript build artifacts
+# Dependencies
+node_modules/
+
+# Build artifacts and caches
 tsconfig.tsbuildinfo
