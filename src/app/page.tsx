@@ -352,7 +352,7 @@ export default function Dashboard() {
   }, []);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number; bounds?: { west: number; south: number; east: number; north: number } } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<'layers'|'markets'|'intel'|'search'|'recon'|'remote'|'oi'|null>(null);
+  const [mobilePanel, setMobilePanel] = useState<'layers'|'markets'|'intel'|'search'|'recon'|'remote'|'oi'|'route'|null>(null);
 
   // ── OSIRIS OI ── the run lives here, not in the panel, so the globe keeps
   // drawing it while the panel is closed. State goes to the map's OI layer
@@ -814,8 +814,8 @@ export default function Dashboard() {
     setRouteTarget({ ...p, ts: Date.now() });
     setActiveRoute(null);
     setShowDesktopSearch(false);
-    setMobilePanel(null);
-    setShowDirections(true);
+    if (window.matchMedia('(max-width: 767px)').matches) setMobilePanel('route');
+    else { setMobilePanel(null); setShowDirections(true); }
     setFlyToLocation({ lat: p.lat, lng: p.lng, zoom: 14, ts: Date.now() });
   }, []);
 
@@ -834,7 +834,7 @@ export default function Dashboard() {
         else { setShowOi(true); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); }
       }
       if (e.key === 'l') setShowLayers(p => !p);
-      if (e.key === 'm') setShowMarkets(p => !p);
+      if (e.key === 'm') { setShowMarkets(p => { if (!p) { setShowIntel(false); setShowOi(false); setShowAlerts(false); setShowSpaceCam(false); } return p; }); setShowMarkets(p => !p); }
       if (e.key === 'c') setShowScmPanel(p => !p);
       if (e.key === 'i') setShowIntel(p => !p);
       if (e.key === 's') { setShowDesktopSearch(p => !p); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); }
@@ -1638,10 +1638,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── DIRECTIONS — opens beside the right-hand tool rail, under the top bar ── */}
+      {/* ── DIRECTIONS — на телефоне планировщик живёт в нижнем ящике, здесь — только десктоп ── */}
+      {(showDirections || navSession) && !isMobile && (
       <div
-        className={`absolute ${isMobile ? 'top-3' : 'top-[64px]'} z-[400] w-[min(92vw,384px)] pointer-events-auto`}
-        style={isMobile ? { left: '50%', transform: 'translateX(-50%)' } : { right: '56px' }}
+        className={`absolute top-[64px] z-[400] w-[min(92vw,384px)] pointer-events-auto`}
+        style={{ right: '56px' }}
       >
         {navSession ? (
           <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
@@ -1700,6 +1701,7 @@ export default function Dashboard() {
           </motion.div>
         )}
       </div>
+      )}
 
       {/* ── SEARCH — a spotlight at the top of the map: places, addresses, coordinates ── */}
       <AnimatePresence>
@@ -1834,7 +1836,7 @@ export default function Dashboard() {
               />
             )}
           </button>
-          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">RECON</span>
+          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">РЕКОН</span>
           <AnimatePresence>
             {showIntel && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
@@ -1860,7 +1862,7 @@ export default function Dashboard() {
               />
             )}
           </button>
-          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">SPACE</span>
+          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">КОСМОС</span>
           <AnimatePresence>
             {showSpaceCam && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
@@ -1939,7 +1941,7 @@ export default function Dashboard() {
             )}
             {oi.state?.status === 'running' && <span aria-hidden="true" className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--gold-light)] border border-black/60 animate-pulse" />}
           </button>
-          {!showOi && <span className="absolute right-14 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover/oi:opacity-100 group-focus-within/oi:opacity-100 transition-opacity pointer-events-none">OI · ASSIST &amp; FORECAST</span>}
+          {!showOi && <span className="absolute right-14 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover/oi:opacity-100 group-focus-within/oi:opacity-100 transition-opacity pointer-events-none">OI · АССИСТЕНТ И ПРОГНОЗ</span>}
           <AnimatePresence>
             {showOi && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-[60px] w-[412px]" style={{ top: oiTop }}>
@@ -1994,7 +1996,7 @@ export default function Dashboard() {
             )}
             {arcgisLayers.length > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[var(--gold-primary)] text-black text-[9px] font-mono font-bold leading-none px-0.5">{arcgisLayers.length}</span>}
           </button>
-          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">ARCGIS</span>
+          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">АРКГИС</span>
           <AnimatePresence>
             {showArcGIS && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-[340px]">
@@ -2027,7 +2029,7 @@ export default function Dashboard() {
               />
             )}
           </button>
-          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">REMOTE</span>
+          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">ПУЛЬТ</span>
           <AnimatePresence>
             {showRemote && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
@@ -2150,38 +2152,18 @@ export default function Dashboard() {
                 { id: 'recon' as const, icon: Radar, label: 'РЕКОН' },
                 { id: 'oi' as const, icon: Orbit, label: 'OI' },
                 { id: 'search' as const, icon: Search, label: 'ПОИСК' },
-                // Routing was reachable only from the desktop tool rail, so a
-                // phone could not open it at all. It sits next to SEARCH
-                // because both answer "take me somewhere".
+                // Routing lives in the bottom drawer like every other button:
+                // the special-cased top-panel variant used to blend into the
+                // header and looked dead on touch devices.
                 { id: 'route' as const, icon: Route, label: 'МАРШРУТ' },
                 { id: 'remote' as const, icon: Bluetooth, label: 'ПУЛЬТ' },
               ].map(tab => {
-                // Routing opens the planner at the top of the screen rather than
-                // the bottom drawer — it needs the room above the keyboard, and
-                // guidance has to stay readable while you drive.
-                const isRoute = tab.id === 'route';
-                const active = isRoute ? showDirections || Boolean(navSession) : mobilePanel === tab.id;
+                const active = mobilePanel === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
-                      if (isRoute) {
-                        // Mid-drive this must not touch anything: closing the
-                        // planner clears the active route, which would take the
-                        // line off the map underneath a driver. Guidance is
-                        // ended from the navigation view's own exit.
-                        if (navSession) return;
-                        setMobilePanel(null);
-                        setShowDirections((open) => {
-                          if (open) setActiveRoute(null);
-                          return !open;
-                        });
-                        return;
-                      }
-                      setMobilePanel(mobilePanel === tab.id ? null : tab.id);
-                    }}
+                    onClick={() => setMobilePanel(active ? null : tab.id)}
                     aria-pressed={active}
-                    disabled={isRoute && Boolean(navSession)}
                     className={`mobile-nav-btn ${active ? 'active' : ''}`}
                   >
                     <tab.icon className={`w-4 h-4 ${tab.id === 'recon' ? 'text-[var(--cyan-primary)]' : ''}`} />
@@ -2205,7 +2187,7 @@ export default function Dashboard() {
                 <div className="px-3 pb-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="hud-text text-[10px] text-[var(--text-primary)]">
-                      {mobilePanel === 'layers' ? 'СЛОИ И СТАТИСТИКА' : mobilePanel === 'markets' ? 'РЫНКИ И ДАННЫЕ' : mobilePanel === 'intel' ? 'ИНФОРМЛЕНТА' : mobilePanel === 'recon' ? 'ОСИРИС РЕКОН' : mobilePanel === 'remote' ? 'ПУЛЬТ МИРА' : mobilePanel === 'oi' ? 'ОСИРИС OI' : 'SEARCH'}
+                      {{ layers: 'СЛОИ И СТАТИСТИКА', markets: 'РЫНКИ И ДАННЫЕ', intel: 'ИНФОРМЛЕНТА', recon: 'ОСИРИС РЕКОН', remote: 'ПУЛЬТ МИРА', oi: 'ОСИРИС OI', search: 'ПОИСК', route: 'МАРШРУТ' }[mobilePanel]}
                     </span>
                     <button onClick={() => setMobilePanel(null)} className="text-[var(--text-muted)] p-1"><X className="w-4 h-4" /></button>
                   </div>
@@ -2243,6 +2225,28 @@ export default function Dashboard() {
                   {mobilePanel === 'recon' && (
                     <div className="space-y-2">
                       <OsintPanel isOpen={true} onClose={() => setMobilePanel(null)} isMobile={true} onSweepVisualize={setSweepData} />
+                    </div>
+                  )}
+                  {mobilePanel === 'route' && (
+                    <div className="space-y-2">
+                      {/* The planner lives in the drawer, directly under the buttons —
+                          where it used to open behind the header and appeared dead. */}
+                      <DirectionsBar
+                        key={routeTarget?.ts ?? 'plan'}
+                        initialTo={routeTarget}
+                        center={mapCenter ? { lat: mapCenter.lat, lng: mapCenter.lng } : null}
+                        onRoute={(r) => setActiveRoute(r)}
+                        onLiveLocation={setLiveLocation}
+                        onFollowChange={setFollowUser}
+                        onActiveSegment={(seg) => setActiveRoute((r) => (r ? { ...r, activeSegment: seg } : r))}
+                        onStartNavigation={(r, label) => {
+                          setNavSession({ route: r, label, key: Date.now() });
+                          setFollowUser(true);
+                          setMobilePanel(null);
+                        }}
+                        onLocate={(lat, lng, zoom) => setFlyToLocation({ lat, lng, zoom, ts: Date.now() })}
+                        onClose={() => { setMobilePanel(null); setActiveRoute(null); setRouteTarget(null); }}
+                      />
                     </div>
                   )}
                   {mobilePanel === 'remote' && (
@@ -2384,7 +2388,7 @@ export default function Dashboard() {
 
       {/* Shortcut hint — more visible */}
       <div className="desktop-only absolute bottom-[26px] right-5 z-[200] pointer-events-none text-[9px] font-mono text-[var(--text-muted)] opacity-50 tracking-widest" title="Нажмите ? чтобы увидеть все горячие клавиши">
-        Press <span className="text-[var(--gold-primary)] opacity-80">?</span> for shortcuts · <span className="text-[var(--gold-primary)] opacity-80">F</span> fullscreen · <span className="text-[var(--gold-primary)] opacity-80">R</span> reset view
+        Нажмите <span className="text-[var(--gold-primary)] opacity-80">?</span> — все горячие клавиши · <span className="text-[var(--gold-primary)] opacity-80">F</span> — полноэкранный режим · <span className="text-[var(--gold-primary)] opacity-80">R</span> — сброс вида
       </div>
 
 
