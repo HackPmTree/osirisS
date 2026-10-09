@@ -1,4 +1,7 @@
-import type { Map, MapSourceDataEvent, ErrorEvent } from 'maplibre-gl';
+import type { Map, MapSourceDataEvent, MapMouseEvent } from 'maplibre-gl';
+
+/* `ErrorEvent` is a v6 export; 4.x types map error payloads loosely. */
+type TerrainErrorEvent = Partial<MapMouseEvent> & { sourceId?: string };
 import { batchTerrainLayers } from './terrain-layer-order';
 
 export const TERRAIN_SOURCE = 'osiris-terrain-dem';
@@ -56,7 +59,9 @@ export function attachTerrain(map: Map, onStatus: (status: TerrainStatus) => voi
       });
       // DEM maxzoom only limits downloads, not terrain render-tile density.
       // Bound the latter too, especially the distant tiles in a pitched view.
-      map.setSourceTileLodParams(10, 1.25, TERRAIN_SOURCE);
+      // (`setSourceTileLodParams` exists only in MapLibre 5/6 — optional here.)
+      const lodCapable = map as Map & { setSourceTileLodParams?: (min: number, factor: number, source: string) => void };
+      lodCapable.setSourceTileLodParams?.(10, 1.25, TERRAIN_SOURCE);
       restoreLayerOrder = batchTerrainLayers(map);
       map.setTerrain({ source: TERRAIN_SOURCE, exaggeration: 1 });
     } catch (error) {
@@ -93,7 +98,7 @@ export function attachTerrain(map: Map, onStatus: (status: TerrainStatus) => voi
     if (active && !failed && event.sourceId === TERRAIN_SOURCE &&
         event.isSourceLoaded && (event.tile || event.sourceDataType === 'idle')) report('ready');
   };
-  const onError = (event: ErrorEvent & { sourceId?: string }) => {
+  const onError = (event: TerrainErrorEvent) => {
     if (!active || event.sourceId !== TERRAIN_SOURCE) return;
     failed = true;
     report('error');

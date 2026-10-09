@@ -1,4 +1,8 @@
-import type { Map as MapLibreMap, MapMovementEvent } from 'maplibre-gl';
+import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
+
+/* `MapMovementEvent` exists only in MapLibre 6.x; the WebGL1-capable 4.7
+   build types movement payloads as MapMouseEvent-compatible objects. */
+type CameraMovementEvent = Pick<MapMouseEvent, 'target'> & Record<string, unknown>;
 
 export type CameraMove = { kind: 'zoom'; dir: 1 | -1 } | { kind: 'pan'; dx: number; dy: number };
 const CONTROL_EVENT = { osirisCameraControl: true };
@@ -79,7 +83,7 @@ export function createMapCameraControls(
     }, HOLD_DELAY_MS);
   };
 
-  const onStart = (event: MapMovementEvent & { osirisCameraControl?: boolean }) => {
+  const onStart = (event: CameraMovementEvent & { osirisCameraControl?: boolean }) => {
     if (event.osirisCameraControl || issuing) return;
     // A wheel/pinch/search/view change takes ownership. Do not stop its motion.
     release(false);

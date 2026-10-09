@@ -1,32 +1,32 @@
-import type { Map, ProjectionSpecification } from 'maplibre-gl';
+import type { Map } from 'maplibre-gl';
 
-/* MapLibre's own adaptive globe, which is what shipped before #330 and what
-   production last ran successfully. It holds a true globe at overview zooms
-   and switches to mercator internally as you zoom in, so the library owns the
-   transition rather than the app. */
-export const GLOBE_PROJECTION: ProjectionSpecification = { type: 'globe' };
-
-/* Terrain only. Finishing the local-plane transition by zoom 9 — before
-   elevation can activate at 10, and while it stays on down to 9.5 — spares the
-   renderer from compiling both globe+terrain and mercator+terrain GPU
-   programs. That is a terrain optimisation, so it belongs to terrain. #330
-   applied it to every session at every zoom and also baked it into the style,
-   so the overview globe ran this path with terrain switched off, and the
-   basemap stopped drawing there in production. */
-export const TERRAIN_GLOBE_PROJECTION: ProjectionSpecification = {
-  type: ['interpolate', ['linear'], ['zoom'], 7, 'vertical-perspective', 9, 'mercator'],
-};
+/* MapLibre 4.7-compatible projection helpers. The WebGL1-capable downgrade
+   (MapLibre 6.x requires WebGL2, which fails on llvmpipe/software renderers)
+   removed the zoom-interpolated projection expressions and `getProjection`;
+   4.x exposes a boolean `map.getGlobe()`/`setGlobe()` surface instead. Globe
+   in 4.x is adaptive by default (it flattens to mercator as you zoom in), so
+   the terrain-specific interpolated variant from the v6 code path is no
+   longer needed — plain globe covers both cases. */
 
 export function applyMapProjection(
-  map: Pick<Map, 'getProjection' | 'setProjection'>,
+  map: Map,
   mode: 'globe' | 'mercator',
-  terrainEnabled = false,
-) {
-  const next: ProjectionSpecification = mode === 'mercator'
-    ? { type: 'mercator' }
-    : terrainEnabled ? TERRAIN_GLOBE_PROJECTION : GLOBE_PROJECTION;
-  // An omitted style projection is mercator, despite the library's return type.
-  if (JSON.stringify(map.getProjection()?.type ?? 'mercator') === JSON.stringify(next.type)) return false;
-  map.setProjection(next);
+  _terrainEnabled = false,
+): boolean {
+  const wantGlobe = mode === 'globe';
+  let current: boolean;
+  try {
+    current = typeof map.getGlobe === 'function' ? !!map.getGlobe() : false;
+  } catch {
+    current = false;
+  }
+  if (current === wantGlobe) return false;
+  try {
+    map.setGlobe(wantGlobe);
+  } catch {
+    /* setGlobe may be unavailable on very old builds; fall back to style
+       projection, which 4.7 also understands as a constant string. */
+    try { map.setProjection({ type: wantGlobe ? 'globe' : 'mercator' } as never); } catch { /* ignore */ }
+  }
   return true;
 }
