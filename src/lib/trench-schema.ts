@@ -47,7 +47,7 @@ export const trenchCreateSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{6,64}$/, 'id: 6–64 символа [A-Za-z0-9_-]'),
   type: z.literal('trench'),
   name: z.string().min(1).max(120),
-  source: z.enum(['manual', 'cv-scan']).default('manual'),
+  source: z.enum(['ai_detected', 'manual_drawn', 'cv-scan', 'manual']).default('manual_drawn'),
   geometry: trenchGeometry,
   lengthKm: z.number().nonnegative().max(10000).optional(),
   confidence: z.number().min(0).max(1).optional(),

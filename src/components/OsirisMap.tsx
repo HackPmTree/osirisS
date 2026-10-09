@@ -3399,7 +3399,9 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
   return (
     <>
-      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+      {/* Карта — «фон» интерфейса: z-index 0, чтобы панели и кнопки
+          (LayerPanel z-[100], OsintPanel z-[999]) лежали поверх неё. */}
+      <div ref={containerRef} className="absolute inset-0 z-0 w-full h-full" />
       {mapReady && mapRef.current && (
         <CctvPreviews
           mapRef={mapRef}
