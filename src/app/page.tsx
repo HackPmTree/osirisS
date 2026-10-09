@@ -43,6 +43,8 @@ import { diffSweep, appendEvents, type WatchBaseline, type WatchEvent } from '@/
 import { STORAGE_KEY, serializeShapes, deserializeShapes, shapesToGeoJSON, downloadFile } from '@/lib/aoi-export';
 const TokenPanel = dynamic(() => import('@/components/TokenPanel'));
 import { type ImportedLayer } from '@/components/GeoImportPanel';
+/* Слой «Окопы (статические данные)»: хук-стор + панель фильтров (ТЗ: только отображение). */
+import { useTrenches } from '@/lib/use-trenches-store';
 import { useOi } from '@/lib/oi/client';
 import { useAssist } from '@/lib/oi/assist/client';
 import type { Highlight, Site } from '@/lib/oi/assist/tools';
