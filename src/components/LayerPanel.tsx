@@ -187,11 +187,12 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     custom: 'trench' as const,
   },
   {
-    /* Статический слой укреплений из /data/trenches.geojson — только просмотр:
-       тумблер видимости, счётчик и фильтры по типу/статусу (ТЗ «Окопы»). */
+    /* Панель-просмотр укреплений: демо-файл /data/trenches.geojson + реально
+       просканированные объекты из хранилища сканера — тумблер видимости,
+       счётчик и фильтры по типу/статусу (ТЗ «Окопы»). */
     id: 'trench-static',
     label: 'УКРЕПЫ',
-    fullLabel: 'ОКОПЫ (СТАТИЧЕСКИЕ ДАННЫЕ)',
+    fullLabel: 'ОКОПЫ (ДЕМО + СКАНЕР)',
     icon: Mountain,
     layers: [],
     custom: 'trench-static' as const,

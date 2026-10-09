@@ -32,6 +32,9 @@ interface TrenchesPanelProps {
   loading: boolean;
   error: string | null;
   total: number;
+  /** Из них — объектов из демо-файла и из хранилища сканера (честный учёт). */
+  demoCount?: number;
+  scannedCount?: number;
   visibleCount: number;
   typesOn: Set<TrenchType>;
   statusesOn: Set<TrenchStatus>;
@@ -79,6 +82,8 @@ function TrenchesPanel({
   loading,
   error,
   total,
+  demoCount = 0,
+  scannedCount = 0,
   visibleCount,
   typesOn,
   statusesOn,
@@ -126,6 +131,21 @@ function TrenchesPanel({
       {error && (
         <p role="alert" className="mt-2 text-[10px] leading-snug text-red-300/80">
           {error}
+        </p>
+      )}
+
+      {/* Честная сводка источников: демо-файл vs реально просканированные данные */}
+      {!loading && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] font-mono uppercase tracking-wider text-white/35">
+          <span>Демо-файл: <span className="text-white/55">{demoCount}</span></span>
+          <span aria-hidden className="text-white/15">|</span>
+          <span>Сканер / вручную: <span className={scannedCount > 0 ? 'text-[var(--gold-primary)]' : 'text-white/55'}>{scannedCount}</span></span>
+        </div>
+      )}
+      {!loading && scannedCount === 0 && (
+        <p className="mt-1 text-[9.5px] leading-snug text-white/30">
+          Просканированных укреплений пока нет. Запустите CV-скан или обведите линию
+          в модуле «ОКОПЫ → Картограф укреплений» — они появятся здесь и на карте.
         </p>
       )}
 

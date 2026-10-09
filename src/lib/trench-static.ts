@@ -1,7 +1,12 @@
 /**
- * OSIRIS — Статический слой укреплений (окопов).
+ * OSIRIS — Слой укреплений (окопов).
  *
- * Хранение по ТЗ: файл /public/data/trenches.geojson, без БД и без API.
+ * Источники данных (оба реальные, ничего не «придумано»):
+ *  1) Файл /public/data/trenches.geojson — демонстрационные разведданные
+ *     (свойство origin:'demo-file' — панель честно помечает их ДЕМО);
+ *  2) Хранилище сканера: GET /api/trenches — окопы, реально обнаруженные
+ *     CV-сканированием или сохранённые оператором вручную в модуле
+ *     «Картограф укреплений» (TrenchScanner). Пометка origin:'scanned'.
  * Здесь — подготовка данных для MapLibre: исходный FeatureCollection
  * обогазуется служебными полями (подпись, цвет статуса/типа), чтобы
  * paint-выражения layers были простыми ['get', ...] обращениями.
@@ -30,6 +35,8 @@ export interface StaticTrenchFeature {
     confidence?: number;
     source?: string;
     notes?: string;
+    /** Происхождение записи: 'demo-file' (файл-разметка) | 'scanned' (хранилище сканера). */
+    origin?: string;
   };
   geometry: { type: string; coordinates: any };
 }
@@ -46,7 +53,7 @@ export function formatLengthM(m?: number): string {
 }
 
 /** Одна модель Trench → готовая к рендеру GeoJSON Feature. */
-export function trenchToRenderFeature(t: Trench): StaticTrenchFeature {
+export function trenchToRenderFeature(t: Trench, origin?: string): StaticTrenchFeature {
   const ru = TRENCH_TYPE_LABEL_RU[t.type];
   const len = formatLengthM(t.length_m);
   return {
@@ -63,22 +70,24 @@ export function trenchToRenderFeature(t: Trench): StaticTrenchFeature {
       confidence: t.confidence,
       source: t.source,
       notes: t.notes,
+      origin,
     },
     geometry: t.geometry as unknown as { type: string; coordinates: any },
   };
 }
 
 /**
- * Привести загруженный из /data/trenches.geojson объект к размеченному FC.
+ * Привести загруженный объект (файл или ответ /api/trenches) к размеченному FC.
  * Битые записи отбрасываются молча — слой не должен падать из-за одной строки.
+ * origin: 'demo-file' | 'scanned' — откуда пришли данные (для честной пометки в панели).
  */
-export function prepareStaticTrenches(raw: unknown): StaticTrenchFC {
+export function prepareStaticTrenches(raw: unknown, origin?: string): StaticTrenchFC {
   const features: StaticTrenchFeature[] = [];
   const src = (raw as any)?.features;
   if (!Array.isArray(src)) return { type: 'FeatureCollection', features };
   src.forEach((f: any, i: number) => {
     const t = featureToTrench(f, i);
-    if (t) features.push(trenchToRenderFeature(t));
+    if (t) features.push(trenchToRenderFeature(t, origin));
   });
   return { type: 'FeatureCollection', features };
 }
