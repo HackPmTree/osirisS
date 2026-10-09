@@ -10,13 +10,14 @@ import {
 import StyleStudio from './StyleStudio';
 import GeoImportPanel, { type ImportedLayer } from './GeoImportPanel';
 import TrenchScanner from './TrenchScanner';
+import TrenchesPanel from './panels/TrenchesPanel';
 import { TERRAIN_MIN_ZOOM, type TerrainStatus } from '@/lib/map-terrain';
 import { MapPinned } from 'lucide-react';
 
 interface LayerPanelProps {
   data: any;
-  activeLayers: any;
-  setActiveLayers: React.Dispatch<React.SetStateAction<any>>;
+  activeLayers: Record<string, boolean>;
+  setActiveLayers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   isMobile?: boolean;
   theme?: 'core' | 'ghost';
   setTheme?: (theme: 'core' | 'ghost') => void;
@@ -36,6 +37,8 @@ interface LayerPanelProps {
   onImportBounds?: (b: { west: number; south: number; east: number; north: number }) => void;
   /** Прокидывается из страницы в модуль «Картограф укреплений» (левое меню). */
   trenchProps?: React.ComponentProps<typeof TrenchScanner>;
+  /** Прокидывается из страницы в панель статического слоя «Окопы (данные)». */
+  staticTrenchesPanelProps?: React.ComponentProps<typeof TrenchesPanel>;
 }
 
 interface LayerDef {
@@ -58,7 +61,7 @@ interface LayerGroupDef {
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   layers: LayerDef[];
   /** Встроенная нестандартная панель вместо списка слоёв (импорт карты, окопы). */
-  custom?: 'geoimport' | 'trench';
+  custom?: 'geoimport' | 'trench' | 'trench-static';
 }
 
 const LAYER_GROUPS: LayerGroupDef[] = [
@@ -170,6 +173,15 @@ const LAYER_GROUPS: LayerGroupDef[] = [
     custom: 'trench' as const,
   },
   {
+    /* Статический слой укреплений из /data/trenches.geojson — только просмотр:
+       тумблер видимости, счётчик и фильтры по типу/статусу (ТЗ «Окопы»). */
+    label: 'УКРЕПЫ',
+    fullLabel: 'ОКОПЫ (СТАТИЧЕСКИЕ ДАННЫЕ)',
+    icon: Mountain,
+    layers: [],
+    custom: 'trench-static' as const,
+  },
+  {
     label: 'ВИД',
     fullLabel: 'ОТОБРАЖЕНИЕ',
     icon: Sun,
@@ -230,7 +242,7 @@ function SubLayerStem() {
   );
 }
 
-function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true, importedLayers = [], onAddImportedLayer, onRemoveImportedLayer, onImportBounds, trenchProps }: LayerPanelProps) {
+function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, revealed = true, importedLayers = [], onAddImportedLayer, onRemoveImportedLayer, onImportBounds, trenchProps, staticTrenchesPanelProps }: LayerPanelProps) {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   /**
    * A pinned group stays open when the pointer leaves. Hover-only flyouts are
@@ -270,6 +282,13 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
           onSaved={trenchProps?.onSaved}
         />
       );
+    }
+    if (group.custom === 'trench-static') {
+      /* Панель статического слоя окопов без props страницы не показывается:
+         видимость живёт в activeLayers.trench_static, а данные — в стейте
+         страницы; рендерить заглушку с нерабочими тумблерами хуже, чем
+         молча оставить группу скрытой (см. filter ниже). */
+      return staticTrenchesPanelProps ? <TrenchesPanel {...staticTrenchesPanelProps} /> : null;
     }
     return null;
   };
@@ -311,7 +330,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   const visibleGroups = LAYER_GROUPS.map(g => ({
     ...g,
     layers: g.layers.filter(l => !l.requires || capabilities[l.requires]),
-  })).filter(g => g.layers.length > 0 || g.custom);
+  })).filter(g => g.layers.length > 0 || (g.custom && g.custom !== 'trench-static') || !!staticTrenchesPanelProps);
 
   const getCount = (dk: string, catKey?: string): number | null => {
     if (!dk) return null;
